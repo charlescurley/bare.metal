@@ -1,0 +1,17 @@
+*~
+howto/docbook/Linux-Complete-Backup-and-Recovery-HOWTO/cooked
+howto/docbook/Linux-Complete-Backup-and-Recovery-HOWTO/smooth/*
+howto/docbook/Linux-Complete-Backup-and-Recovery-HOWTO/dist
+howto/docbook/Linux-Complete-Backup-and-Recovery-HOWTO/Linux-Complete-Backup-and-Recovery-HOWTO/*
+TAGS
+*.bz2
+*.aux
+*.dvi
+*.log
+*.out
+*.pdf
+*.ps
+*.rtf
+*.spec
+*.tex
+*.txt

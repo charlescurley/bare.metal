@@ -1,0 +1,203 @@
+# a makefile for generating the Bare Metal Recovery HOW-TO
+
+# Time-stamp: <2014-11-26 15:41 charles Makefile>
+
+# Get the current version number, which is also incorporated into the
+# CVS tag. Create a file called 'tag' with the complete tag you
+# want. The line below will extract the version number from it and
+# drop leading 0s from the minor version number. E.g:
+
+#
+# tag=LCBRH-2-03
+#
+
+# VERSION := $(shell egrep --only-matching --max-count=1 'LCBRH-[0-9]+-[0-9]+' tag | egrep --only-matching '[0-9]+-[0-9]+' | sed s/-/./ | sed s/.0/./)
+# VERSION = '2.5'
+VERSION := $(shell grep --max-count 1 --only-matching \<revnumber\>.*\<\/revnumber\> Linux-Complete-Backup-and-Recovery-HOWTO.sgml | grep --only-matching [0-9.]* )
+
+# All the scripts we incorporate into the HOWTO. We filter out CVS,
+# which is the CVS directory, and files with ~ in them, as these are
+# the RCS repository files.
+SCRIPTS := $(shell ls -d scripts/* | sed "s/scripts\///g" | grep -v CVS | grep -v \~)
+
+# Options for jade. If I read the rather terse command line help
+# correctly, this is to allow it up to 65535 errors. You should not
+# need this many.
+JADEOPTS = -E 65535
+
+# The base name of the document
+DOCUMENT = Linux-Complete-Backup-and-Recovery-HOWTO
+
+# The web server directory. This will be mirrored to the web server
+# SERVER = /home/ccurley/public_html/crcweb/$(DOCUMENT)
+SERVER = /home/charles/public_html/crcweb/$(DOCUMENT)
+
+# Some style sheet selections. Note the escapes for the \ and the #.
+# ldpdslpath = /usr/share/sgml/docbook/dsssl-stylesheets
+# ldpdslpath := $(shell pwd)
+ldpdslpath = /usr/share/sgml/docbook/stylesheet/dsssl/ldp/
+indexdsl = -d $(ldpdslpath)/ldp.dsl
+dslhtml = -d $(ldpdslpath)/ldp.dsl\\\#html
+dslprint = -d $(ldpdslpath)/ldp.dsl\\\#print
+
+
+cooked:
+	-mkdir cooked $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
+
+clean:
+	echo Document is $(DOCUMENT)
+	for S in cooked dist $(DOCUMENT) $(DOCUMENT)-$(VERSION)* $(DOCUMENT).aux $(DOCUMENT).dvi $(DOCUMENT).junk $(DOCUMENT).log $(DOCUMENT).out $(DOCUMENT).pdf $(DOCUMENT).ps $(DOCUMENT).rtf $(DOCUMENT).smooth $(DOCUMENT).tex $(DOCUMENT).txt ; do \
+	if [ -e $$S ] ; then \
+	    rm -r $$S ; \
+	fi \
+	done
+	mkdir cooked $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
+
+# scripts: $(SCRIPTS)
+scripts: cooked
+	for S in $(SCRIPTS) ; do \
+	./buildscript $$S ; \
+	done
+
+$(DOCUMENT)/index.html: $(DOCUMENT).sgml scripts
+	rm -r $(DOCUMENT).junk
+	mv $(DOCUMENT) $(DOCUMENT).junk
+	mkdir $(DOCUMENT)
+	cd $(DOCUMENT) ; /usr/bin/jade $(JADEOPTS) -t sgml -i html $(indexdsl) $(dslhtml) ../$(DOCUMENT).sgml
+
+# this target makes it easier to type as a target name. OK, I'm lazy.
+chunky: $(DOCUMENT)/index.html
+
+
+$(DOCUMENT).smooth/$(DOCUMENT).smooth.html: $(DOCUMENT).sgml scripts
+	/usr/bin/jade $(JADEOPTS) -V nochunks -t sgml -i html $(indexdsl) $(dslhtml) $(DOCUMENT).sgml > $(DOCUMENT).smooth/$(DOCUMENT).smooth.html
+smooth: $(DOCUMENT).smooth/$(DOCUMENT).smooth.html
+
+html: chunky smooth
+
+$(DOCUMENT).txt: $(DOCUMENT).smooth/$(DOCUMENT).smooth.html
+	lynx $(DOCUMENT).smooth/$(DOCUMENT).smooth.html --dump --nolist > $(DOCUMENT).txt
+
+text: $(DOCUMENT).txt
+
+$(DOCUMENT).rtf: $(DOCUMENT).sgml scripts
+	jade $(JADEOPTS) -t rtf -V rtf-backend $(dslprint) $(DOCUMENT).sgml
+rtf: $(DOCUMENT).rtf
+
+$(DOCUMENT).tex: $(DOCUMENT).sgml scripts
+	jade $(JADEOPTS) -t tex -V tex-backend $(dslprint) $(DOCUMENT).sgml
+tex: $(DOCUMENT).tex
+
+# It seems to be necessary to run this thrice in order to get the TOC
+# to work correctly. I don't understand it either.
+
+$(DOCUMENT).dvi: $(DOCUMENT).tex scripts
+	jadetex $(DOCUMENT).tex
+	jadetex $(DOCUMENT).tex
+	jadetex $(DOCUMENT).tex
+
+dvi: $(DOCUMENT).dvi
+
+
+$(DOCUMENT).ps: $(DOCUMENT).dvi scripts
+	dvips -f $(DOCUMENT).dvi -o $(DOCUMENT).ps #  -The 1.5cm,3cm ?? We don't need this, but non-US might.
+
+ps: $(DOCUMENT).ps
+
+
+# It seems to be necessary to run this thrice in order to get the TOC
+# to work correctly, and to get the TOC into to the bookmarks panel on
+# the left side of the acroread reader. I don't understand it either.
+
+$(DOCUMENT).pdf: $(DOCUMENT).tex scripts
+	pdfjadetex $(DOCUMENT).tex
+	pdfjadetex $(DOCUMENT).tex
+	pdfjadetex $(DOCUMENT).tex
+
+pdf: $(DOCUMENT).pdf
+
+
+all: html rtf tex dvi ps pdf text
+
+dist:
+	# The source tarball for download
+	mkdir $(DOCUMENT)-$(VERSION)
+	cp -rp bare.metal.backup.excludes README tag scripts $(DOCUMENT).sgml buildscript Makefile images $(DOCUMENT)-$(VERSION)
+	-cp -rpL COPYING ldp.dsl $(DOCUMENT)-$(VERSION)
+	rm -rf $(DOCUMENT)-$(VERSION)/scripts/*~ $(DOCUMENT)-$(VERSION)/scripts/CVS $(DOCUMENT)-$(VERSION)/images/CVS
+	tar -cvjf $(DOCUMENT)-$(VERSION).tar.bz2 $(DOCUMENT)-$(VERSION)
+	rm -r $(DOCUMENT)-$(VERSION)
+	touch dist
+
+# Be sure to sign the RPMs after you make them!!
+
+# find $(rpm --eval "%{_topdir}") -iname 'Linu*rpm' -exec rpm --addsign {} +
+
+# rpms: dist
+# 	cp -rp $(DOCUMENT)-$(VERSION).tar.bz2 `rpm --eval "%{_sourcedir}"`
+# 	rpmbuild -ba Linux-Complete-Backup-and-Recovery-HOWTO.spec
+
+ship: all dist
+	# The chunky version for on-line viewing
+	-rm -r $(SERVER)
+	mkdir $(SERVER)
+	cp -rp $(DOCUMENT) $(SERVER)
+	cp -rp images $(SERVER)
+	rm -r $(SERVER)/images/CVS # Don't give out the CVS data
+
+	# PDF PS, and text versions for download
+	cp -p $(DOCUMENT).pdf $(SERVER)/$(DOCUMENT)-$(VERSION).pdf
+	cp -p $(DOCUMENT).ps $(SERVER)/$(DOCUMENT)-$(VERSION).ps
+	cp -p $(DOCUMENT).txt $(SERVER)/$(DOCUMENT)-$(VERSION).txt
+	bzip2 -9 $(SERVER)/$(DOCUMENT)-$(VERSION).ps
+	bzip2 -9 $(SERVER)/$(DOCUMENT)-$(VERSION).pdf
+	bzip2 -9 $(SERVER)/$(DOCUMENT)-$(VERSION).txt
+
+	# Smooth version for download
+	tar --exclude images/CVS -cvf $(DOCUMENT)-$(VERSION).smooth.html.tar $(DOCUMENT).smooth/$(DOCUMENT).smooth.html images
+	bzip2 -9 $(DOCUMENT)-$(VERSION).smooth.html.tar
+	mv  $(DOCUMENT)-$(VERSION).smooth.html.tar.bz2 $(SERVER)/
+
+	# Chunky version for download
+	tar -cvf $(DOCUMENT)-$(VERSION).chunky.html.tar --exclude images/CVS $(DOCUMENT) images
+	bzip2 -9 $(DOCUMENT)-$(VERSION).chunky.html.tar
+	mv $(DOCUMENT)-$(VERSION).chunky.html.tar.bz2  $(SERVER)/
+
+
+	# The source for download. Requires dist:. But run it first, sign the RPMs, then run ship:.
+	cp -rp $(DOCUMENT)-$(VERSION).tar.bz2 $(DOCUMENT).spec  $(SERVER)/
+
+# 	mkdir -p $(SERVER)/srpms $(SERVER)/rpms
+
+# 	cp -rp `rpm --eval "%{_srcrpmdir}"`/$(DOCUMENT)-$(VERSION)*rpm $(SERVER)/srpms
+# 	cp -rp `rpm --eval "%{_rpmdir}"`/noarch/$(DOCUMENT)*rpm $(SERVER)/rpms
+
+# 	createrepo -q $(SERVER)/srpms
+# 	createrepo -q $(SERVER)/rpms
+
+	cd $(SERVER) ; md5sum *.bz2 *.spec > md5sums ; sha1sum *.bz2 *.spec > sha1sums
+	ls -l $(SERVER)
+
+install:
+	# Where we put the archives ready for making CDs, etc.
+	mkdir -p $(DESTDIR)/var/lib/bare.metal.recovery  $(DESTDIR)/usr/sbin
+
+	# Backup time executables.
+	cd scripts ; cp -rp save.metadata make.fdisk $(DESTDIR)/usr/sbin
+
+	# Save the recovery time executables we provide. The archiving
+	# programs look for them here and save them into the archives.
+	mkdir -p $(DESTDIR)/etc/bare.metal.recovery
+	cd scripts ; cp -rp first.stage restore.metadata $(DESTDIR)/etc/bare.metal.recovery
+
+	# Keep them secure from pesky snooping users who don't need to be able
+	# to hack a copy of, say, /etc/shadow.
+	chmod 0700 $(DESTDIR)/var/lib/bare.metal.recovery
+	chmod 0744 $(DESTDIR)/etc/bare.metal.recovery/first.stage $(DESTDIR)/etc/bare.metal.recovery/restore.metadata $(DESTDIR)/usr/sbin/make.fdisk $(DESTDIR)/usr/sbin/save.metadata
+
+	# Do the License...
+# 	mkdir -p $(DESTDIR)/usr/share/doc/$(DOCUMENT)-$(VERSION)
+# 	cp -rp COPYING $(DESTDIR)/usr/share/doc/$(DOCUMENT)-$(VERSION)
+# 	cp -rp Linux-Complete-Backup-and-Recovery-HOWTO.pdf Linux-Complete-Backup-and-Recovery-HOWTO.ps Linux-Complete-Backup-and-Recovery-HOWTO.rtf Linux-Complete-Backup-and-Recovery-HOWTO.smooth Linux-Complete-Backup-and-Recovery-HOWTO Linux-Complete-Backup-and-Recovery-HOWTO.txt $(DESTDIR)/usr/share/doc/$(DOCUMENT)-$(VERSION)
+
+	# Server stuff....
