@@ -1,8 +1,8 @@
-Time-stamp: <2014-11-26 16:07 charles README>
+Time-stamp: <2017-06-29 14:31 charles README>
 
 Debian packages you may want, among others:
 
-apt-get install make jade jadetex ldp-docbook-dsssl lynx
+apt install make jade jadetex docbook ldp-docbook-dsssl lynx
 
 This directory has the SGML source and related files for the Linux
 Complete Backup and Recovery HOWTO. It should have everything you need
