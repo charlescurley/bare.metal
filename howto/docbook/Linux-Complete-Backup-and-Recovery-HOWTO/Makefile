@@ -1,24 +1,14 @@
 # a makefile for generating the Bare Metal Recovery HOW-TO
 
-# Time-stamp: <2014-11-26 15:41 charles Makefile>
-
-# Get the current version number, which is also incorporated into the
-# CVS tag. Create a file called 'tag' with the complete tag you
-# want. The line below will extract the version number from it and
-# drop leading 0s from the minor version number. E.g:
-
-#
-# tag=LCBRH-2-03
-#
+# Time-stamp: <2017-06-29 14:24 charles Makefile>
 
 # VERSION := $(shell egrep --only-matching --max-count=1 'LCBRH-[0-9]+-[0-9]+' tag | egrep --only-matching '[0-9]+-[0-9]+' | sed s/-/./ | sed s/.0/./)
 # VERSION = '2.5'
 VERSION := $(shell grep --max-count 1 --only-matching \<revnumber\>.*\<\/revnumber\> Linux-Complete-Backup-and-Recovery-HOWTO.sgml | grep --only-matching [0-9.]* )
 
-# All the scripts we incorporate into the HOWTO. We filter out CVS,
-# which is the CVS directory, and files with ~ in them, as these are
-# the RCS repository files.
-SCRIPTS := $(shell ls -d scripts/* | sed "s/scripts\///g" | grep -v CVS | grep -v \~)
+# All the scripts we incorporate into the HOWTO. We filter out files
+# with ~ in them.
+SCRIPTS := $(shell ls -d scripts/* | sed "s/scripts\///g" | grep -v \~)
 
 # Options for jade. If I read the rather terse command line help
 # correctly, this is to allow it up to 65535 errors. You should not
@@ -30,7 +20,7 @@ DOCUMENT = Linux-Complete-Backup-and-Recovery-HOWTO
 
 # The web server directory. This will be mirrored to the web server
 # SERVER = /home/ccurley/public_html/crcweb/$(DOCUMENT)
-SERVER = /home/charles/public_html/crcweb/$(DOCUMENT)
+SERVER = /home/charles/public_html/charlescurley.com/$(DOCUMENT)
 
 # Some style sheet selections. Note the escapes for the \ and the #.
 # ldpdslpath = /usr/share/sgml/docbook/dsssl-stylesheets
@@ -121,10 +111,10 @@ all: html rtf tex dvi ps pdf text
 
 dist:
 	# The source tarball for download
-	mkdir $(DOCUMENT)-$(VERSION)
-	cp -rp bare.metal.backup.excludes README tag scripts $(DOCUMENT).sgml buildscript Makefile images $(DOCUMENT)-$(VERSION)
+	mkdir -p $(DOCUMENT)-$(VERSION)
+	cp -rp bare.metal.backup.excludes README scripts $(DOCUMENT).sgml buildscript Makefile images $(DOCUMENT)-$(VERSION)
 	-cp -rpL COPYING ldp.dsl $(DOCUMENT)-$(VERSION)
-	rm -rf $(DOCUMENT)-$(VERSION)/scripts/*~ $(DOCUMENT)-$(VERSION)/scripts/CVS $(DOCUMENT)-$(VERSION)/images/CVS
+	rm -rf $(DOCUMENT)-$(VERSION)/scripts/*~
 	tar -cvjf $(DOCUMENT)-$(VERSION).tar.bz2 $(DOCUMENT)-$(VERSION)
 	rm -r $(DOCUMENT)-$(VERSION)
 	touch dist
@@ -143,7 +133,6 @@ ship: all dist
 	mkdir $(SERVER)
 	cp -rp $(DOCUMENT) $(SERVER)
 	cp -rp images $(SERVER)
-	rm -r $(SERVER)/images/CVS # Don't give out the CVS data
 
 	# PDF PS, and text versions for download
 	cp -p $(DOCUMENT).pdf $(SERVER)/$(DOCUMENT)-$(VERSION).pdf
@@ -154,12 +143,12 @@ ship: all dist
 	bzip2 -9 $(SERVER)/$(DOCUMENT)-$(VERSION).txt
 
 	# Smooth version for download
-	tar --exclude images/CVS -cvf $(DOCUMENT)-$(VERSION).smooth.html.tar $(DOCUMENT).smooth/$(DOCUMENT).smooth.html images
+	tar -cvf $(DOCUMENT)-$(VERSION).smooth.html.tar $(DOCUMENT).smooth/$(DOCUMENT).smooth.html images
 	bzip2 -9 $(DOCUMENT)-$(VERSION).smooth.html.tar
 	mv  $(DOCUMENT)-$(VERSION).smooth.html.tar.bz2 $(SERVER)/
 
 	# Chunky version for download
-	tar -cvf $(DOCUMENT)-$(VERSION).chunky.html.tar --exclude images/CVS $(DOCUMENT) images
+	tar -cvf $(DOCUMENT)-$(VERSION).chunky.html.tar $(DOCUMENT) images
 	bzip2 -9 $(DOCUMENT)-$(VERSION).chunky.html.tar
 	mv $(DOCUMENT)-$(VERSION).chunky.html.tar.bz2  $(SERVER)/
 
@@ -175,7 +164,7 @@ ship: all dist
 # 	createrepo -q $(SERVER)/srpms
 # 	createrepo -q $(SERVER)/rpms
 
-	cd $(SERVER) ; md5sum *.bz2 *.spec > md5sums ; sha1sum *.bz2 *.spec > sha1sums
+	cd $(SERVER) ; sha256sum *.bz2 *.spec > sha256sums ; sha1sum *.bz2 *.spec > sha1sums
 	ls -l $(SERVER)
 
 install:
