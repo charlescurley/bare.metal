@@ -73,6 +73,12 @@ Change notes:
       <!-- Additional revision history entries go here -->
       <!-- Can we automate this? C^2 -->
       <revision>
+        <revnumber>2.10</revnumber>
+        <date>2017-07-12</date>
+        <authorinitials>C^2</authorinitials>
+        <revremark>We now check to see if the Perl UUID module is installed and in Perl's module path. Also, this is our first release under git.</revremark>
+      </revision>
+      <revision>
         <revnumber>2.9</revnumber>
         <date>2014-01-06</date>
         <authorinitials>c^2</authorinitials>
@@ -911,7 +917,8 @@ tar cf - usr/knox | gzip -c > $zip/arkeia.tar.gz]]></programlisting>
       <title>Miscellaneous Files</title>
       <sect3 id="install">
         <title><filename>install</filename></title>
-        <para>This little script just installs things and sets up a few directories. It would be a useful basis for an RPM or deb package. The placement of files is based on the <emphasis><ulink url="http://www.pathname.com/fhs/">Filesystem Hierarchy Standard</ulink></emphasis>, version 2.3, announced on January 29, 2004.</para>
+        <para>This little script just installs things and sets up a few directories. It tests for the presence of the perl UUID module.</para>
+        <para>It would be a useful basis for an RPM or deb package. The placement of files is based on the <emphasis><ulink url="http://www.pathname.com/fhs/">Filesystem Hierarchy Standard</ulink></emphasis>, version 2.3, announced on January 29, 2004.</para>
         <programlisting>&install;</programlisting>
       </sect3>
     </sect2>
