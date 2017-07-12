@@ -3,8 +3,6 @@
 # A script to restore all of the data from an nfs mount. This is our final
 # stage restore.
 
-# Time-stamp: <2008-04-24 07:37:55 ccurley restore.all>
-
 # Copyright 2000 through the last date of modification Charles Curley.
 
 # This program is free software; you can redistribute it and/or modify it

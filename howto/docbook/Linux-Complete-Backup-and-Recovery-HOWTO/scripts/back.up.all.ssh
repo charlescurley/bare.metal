@@ -6,8 +6,6 @@
 # using bz2. This means this script has to know more about the other
 # computer, which does not make for good modularization.
 
-# Time-stamp: <2008-04-24 07:35:20 ccurley back.up.all.ssh>
-
 # Copyright 2000 through the last date of modification Charles Curley.
 
 # This program is free software; you can redistribute it and/or modify it

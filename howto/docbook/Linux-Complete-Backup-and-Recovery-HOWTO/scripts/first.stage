@@ -5,8 +5,6 @@
 # only option is -c, which forces bad block checking during formatting
 # of the partitions.
 
-# Time-stamp: <2008-04-24 07:36:00 ccurley first.stage>
-
 # Copyright 2002 through the last date of modification Charles Curley.
 
 # This program is free software; you can redistribute it and/or modify it

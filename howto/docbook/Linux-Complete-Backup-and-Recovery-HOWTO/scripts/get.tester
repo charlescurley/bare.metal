@@ -8,8 +8,6 @@
 # intended to be used on a firewall. You don't want the firewall to be
 # authenticated to the backup system in case the firewall is cracked.
 
-# Time-stamp: <2008-04-24 07:36:21 ccurley get.tester>
-
 # Copyright 2000 through the last date of modification Charles Curley.
 
 # This program is free software; you can redistribute it and/or modify it

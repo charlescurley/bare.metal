@@ -12,8 +12,6 @@
 # The directory tree where everything is put must already exist and be
 # specified in the environment variable $zip.
 
-# Time-stamp: <2013-10-26 07:06:41 root make.fdisk>
-
 # Copyright 2001 through the last date of modification Charles Curley
 # except for the subroutine cut2fmt.
 

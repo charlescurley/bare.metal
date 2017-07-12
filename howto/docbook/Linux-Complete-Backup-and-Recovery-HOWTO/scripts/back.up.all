@@ -4,8 +4,6 @@
 # work, we need a convenient chunk of disk space on the remote computer we
 # can nfs mount as /mnt/save.
 
-# Time-stamp: <2008-04-24 07:35:07 ccurley back.up.all>
-
 # Copyright 2000 through the last date of modification Charles Curley.
 
 # This program is free software; you can redistribute it and/or modify it

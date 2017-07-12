@@ -1,7 +1,5 @@
 # -*- rpm-spec -*-
 
-# Time-stamp: <2007-08-16 16:00:50 ccurley Linux-Complete-Backup-and-Recovery-HOWTO.spec>
-
 # This spec file is believed to work on Fedora 7. It has not been
 # tested on any other flavor of Linux.
 

@@ -1,7 +1,5 @@
 # a makefile for generating the Bare Metal Recovery HOW-TO
 
-# Time-stamp: <2017-06-29 14:24 charles Makefile>
-
 # VERSION := $(shell egrep --only-matching --max-count=1 'LCBRH-[0-9]+-[0-9]+' tag | egrep --only-matching '[0-9]+-[0-9]+' | sed s/-/./ | sed s/.0/./)
 # VERSION = '2.5'
 VERSION := $(shell grep --max-count 1 --only-matching \<revnumber\>.*\<\/revnumber\> Linux-Complete-Backup-and-Recovery-HOWTO.sgml | grep --only-matching [0-9.]* )

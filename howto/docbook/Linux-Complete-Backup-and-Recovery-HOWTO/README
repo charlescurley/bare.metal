@@ -1,5 +1,3 @@
-Time-stamp: <2017-06-29 14:31 charles README>
-
 Debian packages you may want, among others:
 
 apt install make jade jadetex docbook ldp-docbook-dsssl lynx

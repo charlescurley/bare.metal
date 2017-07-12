@@ -3,8 +3,6 @@
 # A script to save certain meta-data off to the boot partition. Useful for
 # restoration.
 
-# Time-stamp: <2014-01-06 13:13:07 root save.metadata>
-
 # Copyright 2000 through the last date of modification, Charles Curley.
 
 # This program is free software; you can redistribute it and/or modify it
