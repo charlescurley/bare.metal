@@ -166,25 +166,5 @@ ship: all dist
 	ls -l $(SERVER)
 
 install:
-	# Where we put the archives ready for making CDs, etc.
-	mkdir -p $(DESTDIR)/var/lib/bare.metal.recovery  $(DESTDIR)/usr/sbin
-
-	# Backup time executables.
-	cd scripts ; cp -rp save.metadata make.fdisk $(DESTDIR)/usr/sbin
-
-	# Save the recovery time executables we provide. The archiving
-	# programs look for them here and save them into the archives.
-	mkdir -p $(DESTDIR)/etc/bare.metal.recovery
-	cd scripts ; cp -rp first.stage restore.metadata $(DESTDIR)/etc/bare.metal.recovery
-
-	# Keep them secure from pesky snooping users who don't need to be able
-	# to hack a copy of, say, /etc/shadow.
-	chmod 0700 $(DESTDIR)/var/lib/bare.metal.recovery
-	chmod 0744 $(DESTDIR)/etc/bare.metal.recovery/first.stage $(DESTDIR)/etc/bare.metal.recovery/restore.metadata $(DESTDIR)/usr/sbin/make.fdisk $(DESTDIR)/usr/sbin/save.metadata
-
-	# Do the License...
-# 	mkdir -p $(DESTDIR)/usr/share/doc/$(DOCUMENT)-$(VERSION)
-# 	cp -rp COPYING $(DESTDIR)/usr/share/doc/$(DOCUMENT)-$(VERSION)
-# 	cp -rp Linux-Complete-Backup-and-Recovery-HOWTO.pdf Linux-Complete-Backup-and-Recovery-HOWTO.ps Linux-Complete-Backup-and-Recovery-HOWTO.rtf Linux-Complete-Backup-and-Recovery-HOWTO.smooth Linux-Complete-Backup-and-Recovery-HOWTO Linux-Complete-Backup-and-Recovery-HOWTO.txt $(DESTDIR)/usr/share/doc/$(DOCUMENT)-$(VERSION)
-
-	# Server stuff....
+	# use the script.
+	cd scripts && ./install
