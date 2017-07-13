@@ -4,10 +4,6 @@
 # VERSION = '2.5'
 VERSION := $(shell grep --max-count 1 --only-matching \<revnumber\>.*\<\/revnumber\> Linux-Complete-Backup-and-Recovery-HOWTO.sgml | grep --only-matching [0-9.]* )
 
-# All the scripts we incorporate into the HOWTO. We filter out files
-# with ~ in them.
-SCRIPTS := $(shell ls -d scripts/* | sed "s/scripts\///g" | grep -v \~)
-
 # Options for jade. If I read the rather terse command line help
 # correctly, this is to allow it up to 65535 errors. You should not
 # need this many.
@@ -30,7 +26,7 @@ dslprint = -d $(ldpdslpath)/ldp.dsl\\\#print
 
 
 cooked:
-	-mkdir cooked $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
+	-mkdir cooked scripts $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
 
 clean:
 	echo Document is $(DOCUMENT)
@@ -39,13 +35,12 @@ clean:
 	    rm -r $$S ; \
 	fi \
 	done
+	cd src && make clean
 	mkdir cooked $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
 
-# scripts: $(SCRIPTS)
+.PHONY: scripts
 scripts: cooked
-	for S in $(SCRIPTS) ; do \
-	./buildscript $$S ; \
-	done
+	cd src && make all
 
 $(DOCUMENT)/index.html: $(DOCUMENT).sgml scripts
 	rm -r $(DOCUMENT).junk
@@ -107,15 +102,18 @@ pdf: $(DOCUMENT).pdf
 
 all: html rtf tex dvi ps pdf text
 
-dist:
+$(DOCUMENT)-$(VERSION).tar.bz2: bare.metal.backup.excludes README src $(DOCUMENT).sgml buildscript Makefile images COPYING ldp.dsl
 	# The source tarball for download
 	mkdir -p $(DOCUMENT)-$(VERSION)
-	cp -rp bare.metal.backup.excludes README scripts $(DOCUMENT).sgml buildscript Makefile images $(DOCUMENT)-$(VERSION)
+	cp -rp bare.metal.backup.excludes README src scripts $(DOCUMENT).sgml buildscript Makefile images $(DOCUMENT)-$(VERSION)
 	-cp -rpL COPYING ldp.dsl $(DOCUMENT)-$(VERSION)
 	rm -rf $(DOCUMENT)-$(VERSION)/scripts/*~
+	rm -rf $(DOCUMENT)-$(VERSION)/src/*~
+	rm -rf $(DOCUMENT)-$(VERSION)/src/*.cooked
 	tar -cvjf $(DOCUMENT)-$(VERSION).tar.bz2 $(DOCUMENT)-$(VERSION)
 	rm -r $(DOCUMENT)-$(VERSION)
-	touch dist
+
+dist: $(DOCUMENT)-$(VERSION).tar.bz2
 
 # Be sure to sign the RPMs after you make them!!
 
@@ -166,5 +164,5 @@ ship: all dist
 	ls -l $(SERVER)
 
 install:
-	# use the script.
+	# use the script, Luke.
 	cd scripts && ./install
