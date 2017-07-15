@@ -23,7 +23,7 @@
 <!ENTITY longversion "$Header: /cvsroot/LDP/howto/docbook/Linux-Complete-Backup-and-Recovery-HOWTO/Linux-Complete-Backup-and-Recovery-HOWTO.sgml,v 1.29 2007/07/08 18:05:45 ccurley Exp $">
 
 <!ENTITY myemail "charlescurley at charlescurley dot com">
-<!ENTITY myurl "http://www.charlescurley.com">
+<!ENTITY myurl "http://charlescurley.com">
 
 <!ENTITY % review "IGNORE">
 
@@ -75,7 +75,7 @@ Change notes:
       <revision>
         <revnumber>2.10</revnumber>
         <date>2017-07-12</date>
-        <authorinitials>C^2</authorinitials>
+        <authorinitials>c^2</authorinitials>
         <revremark>We now check to see if the Perl UUID module is installed and in Perl's module path. Also, this is our first release under git.</revremark>
       </revision>
       <revision>
@@ -195,6 +195,7 @@ Change notes:
     </revhistory>
 
     <abstract>
+    <title>Abstract</title>
       <para>Imagine your disk drive has just become a very expensive hockey puck. Imagine you have had a fire, and your computer case now looks like something Salvador Dal&itilde; would like to paint. Now what?</para>
       <para>Total restore, sometimes called bare metal recovery, is the process of rebuilding a computer after a catastrophic failure. In order to make a total restoration, you must have complete backups, not only of your file system, but of partition information and other data. This HOWTO is a step-by-step tutorial on how to back up a Linux computer so as to be able to make a bare metal recovery, and how to make that bare metal recovery. It includes some related scripts.</para>
     </abstract>
@@ -203,8 +204,7 @@ Change notes:
   <sect1 id="intro">
     <title>Introduction</title>
     <para>The normal bare metal restoration process is: install the operating system from the product disks. Install the backup software, so you can restore your data. Restore your data. Then you get to restore functionality by verifying your configuration files, permissions, etc.</para>
-    <para>
-   The process and scripts explained in this HOWTO will save re-installing the operating system. The process explained here will restore only files that were backed up from the production computer. Your configuration will be intact when you restore the system, which should save you hours of verifying configurations and data.</para>
+    <para>The process and scripts explained in this HOWTO will save re-installing the operating system. The process explained here will restore only files that were backed up from the production computer. Your configuration will be intact when you restore the system, which should save you hours of verifying configurations and data.</para>
     <sect2 id="copyright">
       <title>Copyright Information</title>
 
@@ -243,7 +243,7 @@ Change notes:
     <sect2 id="disclaimers">
       <title>Disclaimers</title>
 
-      <para> No liability for the contents of this documents can be accepted by the author, the <ulink url="http://www.tldp.org/">Linux Documentation Project</ulink> or anyone else. Use the concepts, examples and other content at your own risk. There may be errors and inaccuracies that may damage your system. Proceed with caution, and, although errors are unlikely, the author take no responsibility for them.</para>
+      <para> No liability for the contents of this documents can be accepted by the author, the <ulink url="http://www.tldp.org/">Linux Documentation Project</ulink> (LDP) or anyone else. Use the concepts, examples and other content at your own risk. There may be errors and inaccuracies that may damage your system. Proceed with caution, and, although errors are unlikely, the author take no responsibility for them.</para>
 
       <para> All copyrights are held by their by their respective owners, unless specifically noted otherwise.  Use of a term in this document should not be regarded as affecting the validity of any trademark or service mark.</para>
 
@@ -255,7 +255,7 @@ Change notes:
     <sect2 id="newversions">
       <title>New Versions</title>
 
-      <para>You can find this document at its <ulink url="&myurl;/Linux-Complete-Backup-and-Recovery-HOWTO.html">home page</ulink> or at the <ulink url="http://www.tldp.org/">Linux Documentation Project</ulink> web site in many formats. Please comment to <email>&myemail;</email></para>
+      <para>You can find this document at its <ulink url="&myurl;/Linux-Complete-Backup-and-Recovery-HOWTO.php">home page</ulink> or at the <ulink url="http://www.tldp.org/">Linux Documentation Project</ulink> web site in many formats. Please comment to <email>&myemail;</email></para>
       <para>Depending on your browser, you may have to hold down the shift button while you click on these in order to get them to download.</para>
     </sect2>
 
@@ -347,7 +347,7 @@ Change notes:
         <para>Your hardware up and running again, with replacement components as needed. The BIOS should be correctly configured, including time and date, and hard drive parameters. At the moment, there is no provision for using a different hard drive.</para>
       </listitem>
       <listitem>
-		<para>When I started this project, I used a <ulink url="http://www.iomega.com/zip/products/par100_250.html"><trademark class="registered">ZIP</trademark> drive</ulink>. Now, they are rather cramped for space and can be inconvenient. You can substitute a USB flash disk, NFS mount, CD-RW or other medium. Just be sure that the Linux distribution you use for first stage restore supports your medium. For historical reasons, this document will refer to the <ulink url="http://www.iomega.com/zip/products/par100_250.html"><trademark class="registered">ZIP</trademark> drive</ulink>; please substitute the medium of your choice. There is more discussion of alternatives below in the section on <link linkend="themeandvariations">Theme And Variations</link>.</para>
+		<para>When I started this project, I used a <ulink url="http://www.iomega.com/zip/products/par100_250.html"><trademark class="registered">ZIP</trademark> drive</ulink>. Now, they are rather cramped for space and can be inconvenient. You can substitute a USB flash disk, NFS mount, CD-RW or other medium. Just be sure that the Linux distribution you use for first stage restore supports your medium. For historical reasons, this document will refer to the <ulink url="http://www.iomega.com/zip/products/par100_250.html">ZIP drive</ulink>; please substitute the medium of your choice. There is more discussion of alternatives below in the section on <link linkend="themeandvariations">Theme And Variations</link>.</para>
       </listitem>
       <listitem>
         <para>Your normal backup media: tape hard drive, etc.</para>
@@ -382,66 +382,8 @@ Change notes:
     <note>
       <title>WARNING</title>
       <para>Do your normal backups on their regular schedule. This HOWTO is useless if you don't do that.</para></note>
-    <para>Build yourself a restoration Linux disk. I have used <ulink url="http://www.knoppix.org/">Knoppix</ulink>. See the notes on <link linkend="knoppix">Knoppix</link> below. However, everything here is command line. We don't need a GUI. A GUI-less distribution will boot faster and can load itself into memory (so you can use the CD drive) even on a minimal machine. For this I now use <ulink url="http://www.finnix.org/">Finnix</ulink>.</para>
-    <para>In the past, I have used <ulink url="http://www.toms.net/rb/">tomsrtbt</ulink>. It is well documented and packs a lot of useful tools onto one floppy diskette. Unfortunately, the changes I've had to make in the scripts to handle more recent Linux systems cause problems for <ulink url="http://www.toms.net/rb/">tomsrtbt</ulink>. The <ulink url="http://www.toms.net/rb/">tomsrtbt</ulink> 2.0.103 tar is based on <ulink url="http://www.busybox.net/">busybox</ulink>, so remarks about it may apply to other Linux disties which use busybox.</para>
-    <para>Next, figure out how to do the operating system backup you will need so that you can restore your normal backup. I used to follow Preston's advice and use an Iomega parallel port ZIP drive. The drives get approximately 90 MB of useful storage to a disk. I need about 85 MB to back up my desktop, so a 100MB ZIP drive may be pushing your luck. These days I use CD-RWs, NFS or USB sticks. For more on those, see the sections on using <link linkend="cd-rom">CD-ROM</link>s and <link linkend="nfs">NFS</link>.</para>
-    <sect2 id="installingzipdrive">
-      <title>Installing the ZIP Drive</title>
-      <para>Installing the ZIP drive is covered in the <ulink url="http://www.tldp.org/HOWTO/mini/ZIP-Drive.html">ZIP Drive HOWTO</ulink>, available at <ulink url="http://www.tldp.org/">the Linux Documentation Project</ulink> and at its home page, <ulink url="http://www.njtcom.com/dansie/zip-drive.html">http://www.njtcom.com/dansie/zip-drive.html</ulink>. <!-- njt.com: bad hostname 2003 07 25 --></para>
-    </sect2>
-    <sect2 id="backup.server">
-      <title>Backup Server</title>
-      <para>You can set up a backup server for this process. Scripts on the backup server interact with the target machines (including itself) via SSH. They assume that your backup server user (root here, for simplicity) can log in with no password to the targets. This is necessary for unattended backups.</para>
-      <para>First, create a suitable directory to keep all the backups in. We'll call it <filename>backs</filename>. In backs, create a directory for each target computer. The first field in the directory should be the host name. Subsequent fields can be other useful information. For example, to preserve the last backup of a target before an installation of a new version of the distribution, I use an abbreviation for the distribution, e.g. <quote>fc5</quote>. Fields are separated with periods (<quote>.</quote>). So, for example, <filename>tester.f7</filename>. The host name is required because the scripts use that to determine which host to back up.</para>
-      <para>Copy the scripts <filename>get</filename> and <filename>restore</filename> into each target's directory. Then customize them for each host as needed.</para>
-      <para>Also create in <filename>backs</filename> a directory called <filename>scripts</filename> and put in it the script <filename>get.target</filename>. This is a library for the backup and restore scripts. It performs actions common to all backups and restorations.</para>
-    </sect2>
-  </sect1>
-  <sect1 id="CreatingtheStage1BackUp">
-    <title>Creating the Stage 1 Back Up</title>
-    <para>Having made your production backups, you need to preserve your partition information so that you can rebuild your partitions.</para>
-    <para>The script <link linkend="make.fdisk"><filename>make.fdisk</filename></link> scans a hard drive for partition information, and saves it in four files. The first is an executable script, called <link linkend="make.dev.hda"><filename>make.dev.x</filename></link> (where <quote>x</quote> is the name of the device file, e.g. hda). Second is <link linkend="mount.dev.hda"><filename>mount.dev.x</filename></link>, which creates mount points and mounts the newly created partitions on them. The next, <link linkend="dev.hda"><filename>dev.x</filename></link>, is the commands necessary for <command>fdisk</command> to build the partitions. Last is an input file for <command>sfdisk</command> to create partions. (<command>sfdisk</command> is preferable and used if found.) You specify which hard drive you want to build scripts for (and thus the file names) by naming the associated device file as the argument to <link linkend="make.fdisk"><filename>make.fdisk</filename></link>. For example, on a typical IDE system,</para>
-    <programlisting>bash# <command>make.fdisk /dev/hda</command></programlisting>
-    <para>spits out the scripts <link linkend="make.dev.hda"><filename>make.dev.hda</filename></link>, <link linkend="mount.dev.hda"><filename>mount.dev.hda</filename></link> and the input files for <command>fdisk</command> and <command>sfdisk</command>, <link linkend="dev.hda"><filename>dev.hda</filename></link> and <link linkend="dev.hda.sfd"><filename>dev.hda.sfd</filename></link>, respectively.</para>
-    <para>In addition, if <link linkend="make.fdisk"><filename>make.fdisk</filename></link> encounters a FAT partition, it preserves the partition's boot sector in a file named <filename>dev.xy</filename>, where x is the drive's device name (e.g. sdc, hda) and y is the partition number. The boot sector is the first sector, 512 bytes, of the partition. This sector is restored at the same time the partitions are rebuilt, in the script <link linkend="make.dev.hda"><filename>make.dev.hda</filename></link>.</para>
-    <para>Fortunately, the price of hard drives is plummeting almost as fast as the public's trust in politicians after an election. So it is good that the output files are text, and allow hand editing. That's the most difficult but most flexible way to rebuild on a larger replacement drive. (See the <link linkend="todo">To Do list</link>.)</para>
-    <para>Other metadata are preserved by the script <link linkend="save.metadata"><filename>save.metadata</filename></link>. The script saves the partition information in the file <filename>fdisk.hda</filename> in the root of the ZIP disk. It is a good idea to print this file and your <filename>/etc/fstab</filename> so that you have hard copy should you ever have to restore the partition data manually. You can save a tree by toggling between two virtual consoles, running <command>fdisk</command> in one and catting <filename>/etc/fstab</filename> or <filename>/fdisk.hda</filename> as needed. However, doing so is error prone.</para>
-    <para>You will also want to preserve files relevant to your restoration method. For example, if you use NFS to save your data, you will need to preserve hosts.allow, hosts.deny, exports, etc. Also, if you are using any network-backed restoration process, such as Amanda or Quick Restore, you will need to preserve networking files like HOSTNAME, hosts, etc. and the relevant software tree.</para>
-    <para>The simplest way to handle these and similar questions is to preserve the entire <filename>/etc</filename> directory.</para>
-    <para>There is no way a 100 MB ZIP drive is going to hold a server installation of a modern distribution of Linux. We have to be much more selective than simply preserving the whole kazoo. What files do we need?</para>
-    <itemizedlist>
-      <listitem>
-        <para>The boot directory.</para>
-      </listitem>
-      <listitem>
-        <para>The <filename>/etc</filename> directory and subdirectories.</para>
-      </listitem>
-      <listitem>
-        <para>Directories needed at boot time.</para>
-      </listitem>
-      <listitem>
-        <para>Device files in <filename>/dev</filename> unless you are using udev.</para>
-      </listitem>
-    </itemizedlist>
-    <para>To determine the directories needed at boot, we look at the boot initialization file <filename>/etc/rc.sysinit</filename>. It sets its own path like so:</para>
-    <programlisting><![ CDATA [PATH=/bin:/sbin:/usr/bin:/usr/sbin
-]]><![ CDATA [export PATH]]></programlisting>
-    <para>Trial and error indicated that we needed some other directories as well.</para>
-    <para>In reading the script <link linkend="save.metadata"><filename>save.metadata</filename></link>, note that we aren't necessarily saving files that are called with absolute paths.</para>
-    <para>We may require several iterations of back up, test the bare metal restore, re-install from CD and try again, before we have a working backup script. While I worked on this HOWTO, I made five such iterations before I had a successful restoration. That is one reason why it is essential to use scripts whenever possible. Test thoroughly!</para>
-    <para>One thing you can do on an RPM based system is use the <command>rpm</command> program to determine which files are where. For example, to get a complete list of the files used by the openssh package, run:</para>
-    <programlisting>bash# <command>rpm -ql openssh</command></programlisting>
-    <para>There are some things you don't need, like the man pages. You can inspect each one and decide whether to back it up or not.</para>
-    <note>
-      <title>WARNING</title>
-      <para>The second stage of restoration is run without overwriting previously restored files. This means that the files restored in the first stage are the ones that will be used after full restoration. So update your bare metal backups whenever you update files in these directories!</para>
-    </note>
-    <note>
-      <title>WARNING</title>
-      <para>Recent kernels have incorporated a new ATA (IDE) hard drive driver, libata. Because of this, parallel ATA drives (PATA) now show up as SCSI drives, as serial ATA (SATA) have always done. However, not all rescue distributions (e.g. finix) use this new driver. There is a line toward the bottom of <link linkend="save.metadata"><filename>save.metadata</filename></link> wich very carefully replaces "/dev/sda" with "/dev/hda". Use this as a template if you have multiple IDE hard drives. Comment it out or delete it if this is not an issue for you.</para>
-      <para>Note that there is no guaranteed mapping! Systems with multiple hard drives may have confusing mappings. Be sure to edit this line carefully. Check it if you add or remove a hard drive of any interface type to or from your system!</para>
-      <para>N.B: if you have libata IDE drive issues, the grub-install line at the end of <link linkend="restore.metadata"><filename>restore.metadata</filename></link> won't work. If it doesn't, use your rescue disk to do the same. Or burn and boot to the boot image that is made as part of the first stage backup. Boot to it and do the second state restore as usual. The second state restore should re-run <filename>grub-install</filename> or you can run it manually.</para>
-    </note>
+    <para>Build yourself a restoration Linux disk. For this I now use <ulink url="http://www.finnix.org/">Finnix</ulink>. I have used <ulink url="http://www.knoppix.org/">Knoppix</ulink> in the past. See the notes on <link linkend="knoppix">Knoppix</link> below. However, everything here is command line. We don't need a GUI. A GUI-less distribution (such as Finnix) will boot faster and can load itself into memory (so you can use the CD drive) even on a minimal machine.</para>
+    <para>In the past, I have used <ulink url="http://www.toms.net/rb/">tomsrtbt</ulink>. It is well documented and packs a lot of useful tools onto one floppy diskette. Unfortunately, the changes I've had to make in the scripts to handle more recent Linux systems cause problems for <ulink url="http://www.toms.net/rb/">tomsrtbt</ulink>. The <ulink url="http://www.toms.net/rb/">tomsrtbt</ulink> 2.0.103 tar is based on <ulink url="http://www.busybox.net/">busybox</ulink>, so remarks about it may apply to other Linux disties which use busybox. And tomsrtbt has other problems.</para>
     <note>
       <title>WARNING</title>
       <para>The version of <command>tar</command> included in <ulink url="http://www.toms.net/rb/">tomsrtbt</ulink> does not preserve ownership when it restores. This may cause problems for applications like <link linkend="amanda">Amanda</link>. A backup and restoration tool, Amanda has several directories owned by its own user. The solution is:</para>
@@ -462,6 +404,65 @@ Change notes:
     <note>
       <title>WARNING</title>
       <para><ulink url="http://www.toms.net/rb/">tomsrtbt</ulink> does not support restoring owners by UID/GID. To make backups suitable for restoring with <ulink url="http://www.toms.net/rb/">tomsrtbt</ulink>, remove the tar command line option <quote>--numeric-owner</quote> from the command line options for tar in the function crunch in the script <link linkend="save.metadata"><filename>save.metadata</filename></link>.</para>
+    </note>
+    <para>Next, figure out how to do the operating system backup you will need so that you can restore your normal backup. I used to follow Preston's advice and use an Iomega parallel port ZIP drive. The drives get approximately 90 MB of useful storage to a disk. I need about 85 MB to back up my desktop, so a 100MB ZIP drive may be pushing your luck. These days I use CD-RWs, NFS or USB sticks. For more on those, see the sections on using <link linkend="cd-rom">CD-ROM</link>s and <link linkend="nfs">NFS</link>.</para>
+    <sect2 id="installingzipdrive">
+      <title>Installing the ZIP Drive</title>
+      <para>Installing the ZIP drive is covered in the <ulink url="http://www.tldp.org/HOWTO/mini/ZIP-Drive.html">ZIP Drive HOWTO</ulink>, available at <ulink url="http://www.tldp.org/">the Linux Documentation Project</ulink> and at its home page, <ulink url="http://www.njtcom.com/dansie/zip-drive.html">http://www.njtcom.com/dansie/zip-drive.html</ulink>. <!-- njt.com: bad hostname 2003 07 25 --></para>
+    </sect2>
+    <sect2 id="backup.server">
+      <title>Backup Server</title>
+      <para>You can set up a backup server for this process. Scripts on the backup server interact with the target machines (including itself) via SSH. They assume that your backup server user (root here, for simplicity) can log in with no password to the targets. This is necessary for unattended backups.</para>
+      <para>First, create a suitable directory to keep all the backups in. We'll call it <filename>backs</filename>. In backs, create a directory for each target computer. The first field in the directory should be the host name. Subsequent fields can be other useful information. For example, to preserve the last backup of a target before an installation of a new version of the distribution, I use an abbreviation for the distribution, e.g. <quote>fc5</quote>. Fields are separated with periods (<quote>.</quote>). So, for example, <filename>tester.f7</filename>. The host name is required because the scripts use that to determine which host to back up.</para>
+      <para>Copy the scripts <filename>get</filename> and <filename>restore</filename> into each target's directory. Then customize them for each host as needed.</para>
+      <para>Also create in <filename>backs</filename> a directory called <filename>scripts</filename> and put in it the script <filename>get.target</filename>. This is a library for the backup and restore scripts. It performs actions common to all backups and restorations.</para>
+    </sect2>
+  </sect1>
+  <sect1 id="CreatingtheStage1BackUp">
+    <title>Creating the Stage 1 Back Up</title>
+    <para>Having made your production backups, you need to preserve your partition information so that you can rebuild your partitions.</para>
+    <para>The script <link linkend="make.fdisk"><filename>make.fdisk</filename></link> scans a hard drive for partition information, and saves it in several files. The first is an executable script, one per hard drive, called <link linkend="make.dev.hda"><filename>make.dev.x</filename></link> (where <quote>x</quote> is the name of the device file, e.g. hda or sda). Second is <link linkend="mount.dev.hda"><filename>mount.dev.x</filename></link>, which creates mount points and mounts the newly created partitions on them. The next, <link linkend="dev.hda"><filename>dev.x</filename></link>, is the commands necessary for <command>fdisk</command> to build the partitions. Last is an input file, e.g. <filename>dev.sda.sfd</filename>, for <command>sfdisk</command> to create partions. (<command>sfdisk</command> is preferable and the scripts will used it if they find it.) You specify which hard drive you want to build scripts for (and thus the file names) by naming the associated device file as the argument to <link linkend="make.fdisk"><filename>make.fdisk</filename></link>. For example, on a typical IDE system,</para>
+    <programlisting>bash# <command>make.fdisk /dev/hda</command></programlisting>
+    <para>spits out the scripts <link linkend="make.dev.hda"><filename>make.dev.hda</filename></link>, <link linkend="mount.dev.hda"><filename>mount.dev.hda</filename></link> and the input files for <command>fdisk</command> and <command>sfdisk</command>, <link linkend="dev.hda"><filename>dev.hda</filename></link> and <link linkend="dev.hda.sfd"><filename>dev.hda.sfd</filename></link>, respectively.</para>
+    <para>In addition, if <link linkend="make.fdisk"><filename>make.fdisk</filename></link> encounters a FAT partition, it preserves the partition's boot sector in a file named <filename>dev.xy</filename>, where x is the drive's device name (e.g. sdc, hda) and y is the partition number. The boot sector is the first sector, 512 bytes, of the partition. This sector is restored at the same time the partitions are rebuilt, in the script <link linkend="make.dev.hda"><filename>make.dev.hda</filename></link>.</para>
+    <para>Fortunately, the price of hard drives is plummeting almost as fast as the public's trust in politicians after an election. So it is good that the output files are text, and allow hand editing. That's the most difficult but most flexible way to rebuild on a larger replacement drive. (See the <link linkend="todo">To Do list</link>.)</para>
+    <para>The script <link linkend="save.metadata"><filename>save.metadata</filename></link> preserves other metadata as needed. The script saves the partition information in the file <filename>fdisk.hda</filename> in the root of the ZIP disk. It is a good idea to print this file and your <filename>/etc/fstab</filename> so that you have hard copy should you ever have to restore the partition data manually. You can save a tree by toggling between two virtual consoles, running <command>fdisk</command> in one and catting <filename>/etc/fstab</filename> or <filename>/fdisk.hda</filename> as needed. However, doing so is error prone.</para>
+    <para>You will also want to preserve files relevant to your restoration method. For example, if you use NFS to save your data, you will need to preserve <filename>hosts.allow</filename>, <filename>hosts.deny</filename>, <filename>exports</filename>, etc. Also, if you are using any network-backed restoration process, such as Amanda or Quick Restore, you will need to preserve networking files like HOSTNAME, hosts, etc. and the relevant software tree. The simplest way to handle these and similar questions is to preserve the entire <filename>/etc</filename> directory.</para>
+    <para>There is no way a 100 MB ZIP drive is going to hold a server installation of a modern distribution of Linux. We have to be much more selective than simply preserving the whole kazoo. What files do we need?</para>
+    <itemizedlist>
+      <listitem>
+        <para>The boot directory.</para>
+      </listitem>
+      <listitem>
+        <para>The <filename>/etc</filename> directory and subdirectories.</para>
+      </listitem>
+      <listitem>
+        <para>Directories needed at boot time.</para>
+      </listitem>
+      <listitem>
+        <para>Device files in <filename>/dev</filename> unless you are using udev.</para>
+      </listitem>
+    </itemizedlist>
+    <para>To determine the directories needed at boot, we look at the boot initialization file <filename>/etc/rc.sysinit</filename> (or equivalent). It sets its own path like so:</para>
+    <programlisting><![ CDATA [PATH=/bin:/sbin:/usr/bin:/usr/sbin
+]]><![ CDATA [export PATH]]></programlisting>
+    <para>Trial and error indicated that we needed some other directories as well.</para>
+    <para>In reading the script <link linkend="save.metadata"><filename>save.metadata</filename></link>, note that we aren't necessarily saving files that are called with absolute paths.</para>
+    <para>We may require several iterations of back up, test the bare metal restore, re-install from CD and try again, before we have a working backup script. While I worked on this HOWTO, I made five such iterations before I had a successful restoration. That is one reason why it is essential to use scripts whenever possible. Test thoroughly!</para>
+    <para>One thing you can do on an RPM based system is use the <command>rpm</command> program to determine which files are where. For example, to get a complete list of the files used by the openssh package, run:</para>
+    <programlisting>bash# <command>rpm -ql openssh</command></programlisting>
+    <para>Similarly of debian boxes, using <command>apt-file</command>.</para>
+    <programlisting>bash# <command>apt-file search openssh-server</command></programlisting>
+    <para>There are some things you don't need, like the man pages. You can inspect each one and decide whether to back it up or not.</para>
+    <note>
+      <title>WARNING</title>
+      <para>The second stage of restoration is run without overwriting previously restored files. This means that the files restored in the first stage are the ones that will be used after full restoration. So update your bare metal backups whenever you update files in these directories!</para>
+    </note>
+    <note>
+      <title>WARNING</title>
+      <para>Recent kernels have incorporated a new ATA (IDE) hard drive driver, libata. Because of this, parallel ATA drives (PATA) now show up as SCSI drives, as serial ATA (SATA) have always done. However, not all rescue distributions use this new driver. There is a line toward the bottom of <link linkend="save.metadata"><filename>save.metadata</filename></link> which very carefully replaces "/dev/sda" with "/dev/hda". Use this as a template if you have multiple IDE hard drives. Comment it out or delete it if this is not an issue for you.</para>
+      <para>Note that there is no guaranteed mapping! Systems with multiple hard drives may have confusing mappings. Be sure to edit this line carefully. Check it if you add or remove a hard drive of any interface type to or from your system!</para>
+      <para>N.B: if you have libata IDE drive issues, the grub-install line at the end of <link linkend="restore.metadata"><filename>restore.metadata</filename></link> won't work. If it doesn't, use your rescue disk to do the same. Or burn and boot to the boot image that is made as part of the first stage backup. Boot to it and do the second state restore as usual. The second state restore should re-run <filename>grub-install</filename> or you can run it manually.</para>
     </note>
     <sect2>
       <title id="thearchive">The Archive</title>
@@ -504,7 +505,7 @@ Change notes:
 # <command>mount server:/path/of/exportedfs /mnt/nfs</command>
 # <command>cd /mnt/nfs/.../bin</command></programlisting>
         <para>Now restore as usual.</para>
-        <para>There are several advantages to NFS for this job: You don't have to worry about space on a CD-ROM or <ulink url="http://www.iomega.com/zip/products/par100_250.html"><trademark class="registered">ZIP</trademark> drive</ulink>. You can edit scripts on the server and they are preserved when you reboot the target.</para>
+        <para>There are several advantages to NFS for this job: You don't have to worry about space on a CD-ROM or <ulink url="http://www.iomega.com/zip/products/par100_250.html">ZIP drive</ulink>. You can edit scripts on the server and they are preserved when you reboot the target.</para>
       </sect3>
       <sect3>
         <title>Multiple ZIP disks</title>
@@ -587,7 +588,7 @@ Change notes:
             <para>Recreate the non-LVM partitions from the information gathered when you ran <link linkend="make.fdisk"><filename>make.fdisk</filename></link>.</para>
           </listitem>
           <listitem>
-            <para>Make ext2 and ext3 file systems on non-LVM partitions and Linux swap partitions as appropriate. If you provide the <command>-c</command> option to the script, it will also check for bad blocks.</para>
+            <para>Make ext3+ file systems on non-LVM partitions and Linux swap partitions as appropriate. If you provide the <command>-c</command> option to the script, it will also check for bad blocks.</para>
           </listitem>
           <listitem>
             <para>Make some types of FAT partitions.</para>
@@ -660,7 +661,7 @@ diff /mnt/zip/metadata/rpmVa.txt ~/foo.txt</command></programlisting>
     <para>Below are distribution notes from past experiences. If you have additional notes that you would like to add for other distributions, please forward them to me.</para>
     <sect2 id="ubuntu">
       <title>Debian/Ubuntu</title>
-      <para>The largest change for Debian based systems is the lack of anything analogous to RPM's integrity checking capability, <command>rpm -Va</command>, which we use to check for correct restoration. <command>debsums</command> is close but has other problems. You must install <command>debsums</command>, as soon after installation as possible. You must then run <command>apt-get clean && debsums_init</command>. This command will force the reinstallation of packages for which checksums have not already been generated. Package reinstallation can affect configuration files. Also see the caveats section of the <command>debsums</command> man page.</para>
+      <para>The largest change for Debian based systems is the lack of anything analogous to RPM's integrity checking capability, <command>rpm -Va</command>, which we use to check for correct restoration. <command>debsums</command> is close but has other problems. You must install <command>debsums</command>, as soon after you have installed the system as possible. You must then run <command>apt-get clean && debsums_init</command>. This command will force the reinstallation of packages for which checksums have not already been generated. Package reinstallation can affect configuration files. Also see the caveats section of the <command>debsums</command> man page.</para>
       <para>The most practical problem is that Debian and Ubuntu use UUIDs to identify partitions, rather than device files or labels (like Red Hat systems). We can preserve the UUIDs, and assign them to ext2/3/4 and swap partitions. Actually, we can get UUIDs for any partition <command>blkid</command> supports.</para>
     </sect2>
     <sect2 id="fedora3">
@@ -677,7 +678,7 @@ diff /mnt/zip/metadata/rpmVa.txt ~/foo.txt</command></programlisting>
         <para>For me the best thing about using Knoppix is that I don't need a specific boot medium for each machine, but I can use the same tools all the time. And hardware support in Knoppix is really great. I don't have that much experience with different platforms, but all the machines I've tried have worked fine, scsi drivers are found and so on.</para>
         <para>I'm doing this recovery thing by copying the backups over the network to other machine. The restore involves booting the Knoppix cd, fetching the metadata.tar.gz from the network machine. Then make.dev, mount.dev, fetching the other tar.gz files, grub and reboot. Some typing involved but thanks to your scripts it's quite straighforward. Unless changing from ide to scsi or something, but even then it's not that difficult, since Linux is easy to restore to different hardware.</para>
       </blockquote>
-      <para>Let me add to that that <ulink url="http://www.knoppix.org/">Knoppix</ulink> detects USB devices for you, which is really nice. They make excellent (and roomier) substitutes for the ZIP drive.</para>
+      <para><ulink url="http://www.knoppix.org/">Knoppix</ulink> detects USB devices for you, which is really nice. They make excellent (and roomier) substitutes for the ZIP drive.</para>
       <para>Also see <ulink url="http://www.ibm.com/developerworks/linux/library/l-knopx/index.html"><quote>System recovery with Knoppix</quote></ulink>.</para>
       <para>Do your restore as user <quote>root</quote> rather than as user <quote>knoppix</quote>. Otherwise you may get some directories and files owned by an oddball user or group. Also, for <ulink url="http://www.knoppix.org/">Knoppix</ulink>, we tar the first stage stuff saving numeric user &amp; group values instead of by name. The names may point to different numbers on Knoppix, so we would be restoring the files with incorrect user and group IDs.</para>
     </sect2>
@@ -780,6 +781,9 @@ tar cf - usr/knox | gzip -c > $zip/arkeia.tar.gz]]></programlisting>
       <para>Volunteers are most welcome. Check with me before you start on one of these in case someone else is working on it already.</para>
       <itemizedlist>
         <listitem>
+          <para>Add support for <ulink url="https://gitlab.com/cryptsetup/cryptsetup">LUKS</ulink> and the DMCrypt encryption behind it. Currently one must rebuild a LUKS partition manually.</para>
+        </listitem>
+        <listitem>
           <para>For those systems with <filename>/etc/mke2fs.conf</filename>, get that onto the first stage data so that it is used when partitions are built. We have to copy it into <filename>/etc</filename> before first stage restore.</para>
         </listitem>
         <listitem>
@@ -810,7 +814,7 @@ tar cf - usr/knox | gzip -c > $zip/arkeia.tar.gz]]></programlisting>
       <title>First Stage</title>
       <sect3 id="make.fdisk">
         <title><filename>make.fdisk</filename></title>
-        <para>This script, run at backup time, creates scripts similar to <link linkend="make.dev.hda"><filename>make.dev.hda</filename></link> and <link linkend="mount.dev.hda"><filename>mount.dev.x</filename></link>, below, for you to run at restore time. It also produces data files similar to <link linkend="dev.hda"><filename>dev.hda</filename></link> and <link linkend="dev.hda.sfd"><filename>dev.hda.sfd</filename></link>, below. The names of the scripts and data files produced depend on the device given this script as a a parameter. Those script, run at restore time, build and mount the partitions on the hard drive. <filename>make.fdisk</filename> is called from <link linkend="save.metadata"><filename>save.metadata</filename></link>, below.</para>
+        <para>This script, run at backup time, creates scripts similar to <link linkend="make.dev.hda"><filename>make.dev.hda</filename></link> and <link linkend="mount.dev.hda"><filename>mount.dev.x</filename></link>, below, for you to run at restore time. It also produces data files similar to <link linkend="dev.hda"><filename>dev.hda</filename></link> and <link linkend="dev.hda.sfd"><filename>dev.hda.sfd</filename></link>, below. The names of the scripts and data files produced depend on the device given this script as a parameter. Those script, run at restore time, build and mount the partitions on the hard drive. <filename>make.fdisk</filename> is called from <link linkend="save.metadata"><filename>save.metadata</filename></link>, below.</para>
         <!-- #include program listings to make updates easier. C^2 -->
         <programlisting>&make.fdisk;</programlisting>
       </sect3>
