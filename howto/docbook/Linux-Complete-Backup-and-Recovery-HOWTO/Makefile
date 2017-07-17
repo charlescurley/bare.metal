@@ -30,13 +30,13 @@ cooked:
 
 clean:
 	echo Document is $(DOCUMENT)
-	for S in cooked dist $(DOCUMENT) $(DOCUMENT)-$(VERSION)* $(DOCUMENT).aux $(DOCUMENT).dvi $(DOCUMENT).junk $(DOCUMENT).log $(DOCUMENT).out $(DOCUMENT).pdf $(DOCUMENT).ps $(DOCUMENT).rtf $(DOCUMENT).smooth $(DOCUMENT).tex $(DOCUMENT).txt ; do \
+	for S in cooked scripts $(DOCUMENT) $(DOCUMENT)-$(VERSION)* $(DOCUMENT).aux $(DOCUMENT).dvi $(DOCUMENT).junk $(DOCUMENT).log $(DOCUMENT).out $(DOCUMENT).pdf $(DOCUMENT).ps $(DOCUMENT).rtf $(DOCUMENT).smooth $(DOCUMENT).tex $(DOCUMENT).txt ; do \
 	if [ -e $$S ] ; then \
 	    rm -r $$S ; \
 	fi \
 	done
 	cd src && make clean
-	mkdir cooked $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
+	mkdir cooked scripts $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
 
 # .PHONY: scripts
 scripts: cooked
@@ -102,7 +102,7 @@ pdf: $(DOCUMENT).pdf
 
 all: html rtf tex dvi ps pdf text
 
-$(DOCUMENT)-$(VERSION).tar.bz2: bare.metal.backup.excludes README src $(DOCUMENT).sgml Makefile images COPYING ldp.dsl
+$(DOCUMENT)-$(VERSION).tar.bz2: bare.metal.backup.excludes README src $(DOCUMENT).sgml Makefile images COPYING ldp.dsl all
 	# The source tarball for download
 	mkdir -p $(DOCUMENT)-$(VERSION)
 	cp -rp bare.metal.backup.excludes README src scripts $(DOCUMENT).sgml Makefile images $(DOCUMENT)-$(VERSION)
