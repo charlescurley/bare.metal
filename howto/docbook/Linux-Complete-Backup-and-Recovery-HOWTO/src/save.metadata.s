@@ -178,7 +178,9 @@ echo "Saving hard drive info"
 # List all your hard drives here. Put them in the order you want
 # things done at restore time.
 
-for drive in sda ; do
+# for drive in sda ; do
+for drive in $(ls /dev/[hsv]d?) ; do
+    echo Processing drive ${drive}
     fdisk -l /dev/${drive} | grep GPT > /dev/null
     if [ $? = '0' ] ; then
         echo "GPT found."
