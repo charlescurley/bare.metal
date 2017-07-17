@@ -73,7 +73,7 @@ for dir in\
    back\
    dev\
    initrd\
-   media\
+   media/disk\
    mnt/dosc\
    mnt/imports\
    mnt/nfs\
@@ -116,8 +116,10 @@ chmod 1777 $target/tmp
 # issues, it won't work. If it doesn't, use your rescue disk to do the
 # same.
 
+BOOTDEV=$(ls /dev/[shv]da)
+
 # chroot $target /sbin/lilo -C /etc/lilo.conf
-chroot $target /sbin/grub-install /dev/hda
+chroot $target /sbin/grub-install $BOOTDEV
 
 # Set the system to boot to run level 3 regardless of the current run
 # level. Be sure to set it back to the normal value.
