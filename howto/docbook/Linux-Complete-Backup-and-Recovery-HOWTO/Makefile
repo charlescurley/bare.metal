@@ -1,5 +1,8 @@
 # a makefile for generating the Bare Metal Recovery HOW-TO
 
+# Clean out the suffixes
+.SUFFIXES:
+
 # VERSION := $(shell egrep --only-matching --max-count=1 'LCBRH-[0-9]+-[0-9]+' tag | egrep --only-matching '[0-9]+-[0-9]+' | sed s/-/./ | sed s/.0/./)
 # VERSION = '2.5'
 VERSION := $(shell grep --max-count 1 --only-matching \<revnumber\>.*\<\/revnumber\> Linux-Complete-Backup-and-Recovery-HOWTO.sgml | grep --only-matching [0-9.]* )
@@ -24,6 +27,8 @@ indexdsl = -d $(ldpdslpath)/ldp.dsl
 dslhtml = -d $(ldpdslpath)/ldp.dsl\\\#html
 dslprint = -d $(ldpdslpath)/ldp.dsl\\\#print
 
+# All the scripts we depend on....
+SCRIPTS := $(shell ls scripts/*)
 
 cooked:
 	-mkdir cooked scripts $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
@@ -42,7 +47,7 @@ clean:
 scripts: cooked
 	cd src && make all
 
-$(DOCUMENT)/index.html: $(DOCUMENT).sgml scripts
+$(DOCUMENT)/index.html: $(DOCUMENT).sgml scripts $(SCRIPTS)
 	rm -r $(DOCUMENT).junk
 	mv $(DOCUMENT) $(DOCUMENT).junk
 	mkdir $(DOCUMENT)
@@ -52,7 +57,7 @@ $(DOCUMENT)/index.html: $(DOCUMENT).sgml scripts
 chunky: $(DOCUMENT)/index.html
 
 
-$(DOCUMENT).smooth/$(DOCUMENT).smooth.html: $(DOCUMENT).sgml scripts
+$(DOCUMENT).smooth/$(DOCUMENT).smooth.html: $(DOCUMENT).sgml scripts $(SCRIPTS)
 	/usr/bin/jade $(JADEOPTS) -V nochunks -t sgml -i html $(indexdsl) $(dslhtml) $(DOCUMENT).sgml > $(DOCUMENT).smooth/$(DOCUMENT).smooth.html
 smooth: $(DOCUMENT).smooth/$(DOCUMENT).smooth.html
 
@@ -63,18 +68,18 @@ $(DOCUMENT).txt: $(DOCUMENT).smooth/$(DOCUMENT).smooth.html
 
 text: $(DOCUMENT).txt
 
-$(DOCUMENT).rtf: $(DOCUMENT).sgml scripts
+$(DOCUMENT).rtf: $(DOCUMENT).sgml scripts $(SCRIPTS)
 	jade $(JADEOPTS) -t rtf -V rtf-backend $(dslprint) $(DOCUMENT).sgml
 rtf: $(DOCUMENT).rtf
 
-$(DOCUMENT).tex: $(DOCUMENT).sgml scripts
+$(DOCUMENT).tex: $(DOCUMENT).sgml scripts $(SCRIPTS)
 	jade $(JADEOPTS) -t tex -V tex-backend $(dslprint) $(DOCUMENT).sgml
 tex: $(DOCUMENT).tex
 
 # It seems to be necessary to run this thrice in order to get the TOC
 # to work correctly. I don't understand it either.
 
-$(DOCUMENT).dvi: $(DOCUMENT).tex scripts
+$(DOCUMENT).dvi: $(DOCUMENT).tex scripts $(SCRIPTS)
 	jadetex $(DOCUMENT).tex
 	jadetex $(DOCUMENT).tex
 	jadetex $(DOCUMENT).tex
@@ -82,7 +87,7 @@ $(DOCUMENT).dvi: $(DOCUMENT).tex scripts
 dvi: $(DOCUMENT).dvi
 
 
-$(DOCUMENT).ps: $(DOCUMENT).dvi scripts
+$(DOCUMENT).ps: $(DOCUMENT).dvi scripts $(SCRIPTS)
 	dvips -f $(DOCUMENT).dvi -o $(DOCUMENT).ps #  -The 1.5cm,3cm ?? We don't need this, but non-US might.
 
 ps: $(DOCUMENT).ps
@@ -92,7 +97,7 @@ ps: $(DOCUMENT).ps
 # to work correctly, and to get the TOC into to the bookmarks panel on
 # the left side of the acroread reader. I don't understand it either.
 
-$(DOCUMENT).pdf: $(DOCUMENT).tex scripts
+$(DOCUMENT).pdf: $(DOCUMENT).tex scripts $(SCRIPTS)
 	pdfjadetex $(DOCUMENT).tex
 	pdfjadetex $(DOCUMENT).tex
 	pdfjadetex $(DOCUMENT).tex
@@ -105,7 +110,7 @@ all: html rtf tex dvi ps pdf text
 $(DOCUMENT)-$(VERSION).tar.bz2: bare.metal.backup.excludes README src $(DOCUMENT).sgml Makefile images COPYING ldp.dsl all
 	# The source tarball for download
 	mkdir -p $(DOCUMENT)-$(VERSION)
-	cp -rp bare.metal.backup.excludes README src scripts $(DOCUMENT).sgml Makefile images $(DOCUMENT)-$(VERSION)
+	cp -rp bare.metal.backup.excludes README src scripts $(SCRIPTS) $(DOCUMENT).sgml Makefile images $(DOCUMENT)-$(VERSION)
 	-cp -rpL COPYING ldp.dsl $(DOCUMENT)-$(VERSION)
 	rm -rf $(DOCUMENT)-$(VERSION)/scripts/*~
 	rm -rf $(DOCUMENT)-$(VERSION)/src/*~
