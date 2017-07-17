@@ -59,4 +59,4 @@ restore.tester.cooked: restore.tester.s
 save.metadata.cooked: save.metadata.s
 
 clean:
-	rm *.cooked ../scripts/*
+	rm *.cooked
