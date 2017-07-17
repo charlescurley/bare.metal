@@ -53,6 +53,9 @@
 
 # Changes:
 
+# 2017-07-16: Some disties (Debian 8,9; jessie,stretch), have
+# lvm2. Test for it & use it if it's there.
+
 # 2011-09-07: Per email from Michael Coffman: getextopts was leaving
 # the "needs_recovery" flag in the ext? options, and mke2fs throws up
 # on it. Added a line to remove it.
@@ -410,6 +413,8 @@ FINIS
         print (MKLVS "# Hideously disty dependent! turn on LVM.\n");
         print (MKLVS "if [ -e /etc/init.d/lvm ] ; then\n");
         print (MKLVS "    /etc/init.d/lvm start\nfi\n\n");
+        print (MKLVS "if [ -e /etc/init.d/lvm2 ] ; then\n");
+        print (MKLVS "    /etc/init.d/lvm2 start\nfi\n\n");
 
         # Now walk fstab in search of logical volumes. This is
         # necessary to pick up swap partitions, and it may pick up
@@ -1078,6 +1083,9 @@ swapoff -a
 # Hideously disty dependent! Turn off LVM.
 if [ -e /etc/init.d/lvm ] ; then
     /etc/init.d/lvm stop
+fi
+if [ -e /etc/init.d/lvm2 ] ; then
+    /etc/init.d/lvm2 stop
 fi
 
 export blockcheck=\$1;
