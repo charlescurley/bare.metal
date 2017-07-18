@@ -124,6 +124,8 @@ chroot $target /sbin/grub-install $BOOTDEV
 # Set the system to boot to run level 3 regardless of the current run
 # level. Be sure to set it back to the normal value.
 
-sed -i s/id:.:initdefault:/id:3:initdefault:/g $target/etc/inittab
+if [ -e $target/etc/inittab ] ; then
+  sed -i s/id:.:initdefault:/id:3:initdefault:/g $target/etc/inittab
+fi
 
 df -m
