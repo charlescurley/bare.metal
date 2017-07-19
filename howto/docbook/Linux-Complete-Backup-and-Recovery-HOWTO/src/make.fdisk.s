@@ -53,6 +53,11 @@
 
 # Changes:
 
+# 2017-07-17: A new format string for more modern versions of
+# fdisk. Using split instead of unpack for the output of fdisk. The
+# first go at preserving LUKS partitions. Lots of other changes due to
+# work on debian 9, stretch.
+
 # 2017-07-16: Some disties (Debian 8,9; jessie,stretch), have
 # lvm2. Test for it & use it if it's there.
 
@@ -334,9 +339,38 @@ sub getswaplabel {
     return $ret;
 }
 
+# doluks, for handing LUKS partitions.
+
+sub doluks {
+    my $device = shift;
+    $devName=substr ($device, 5);
+    $cryptName = "${devName}_crypt";
+
+    $fileName = "${outputfilepath}metadata/$devName-header-backup";
+    if ( -e $fileName) {
+        unlink ($fileName);
+    }
+    if (system ("cryptsetup luksHeaderBackup $device --header-backup-file $fileName") != 0 ) {
+        die ("LUKS backup of $device failed!\n\n");
+    }
+    $format .= "echo Device $device is a LUKS partition.\n";
+    $format .= "cryptsetup luksHeaderRestore $device --header-backup-file $devName-header-backup\n";
+    $format .= "cryptsetup isLuks $device\n";
+    $format .= "if [ \"\$?\" != '0'  ] ; then\n";
+    $format .= "    echo Error: $device is NOT a LUKS partition.\n";
+    $format .= "    exit\n";
+    $format .= "fi\n\n";
+    $format .= "echo Opening $device as a LUKS partition.\n";
+    $format .= "cryptsetup luksOpen $device $cryptName\n";
+    $format .= "ls /dev/mapper\n";
+
+    dolvm ();
+}
+
+
 # dolvm is a subroutine to handle LVM partitions.
 
-$lvms = 0;          # true if we've been here before
+$lvms = 0;                      # true if we've been here before
 
 sub dolvm {
 
@@ -403,8 +437,11 @@ FINIS
 #             print ("pv $pvname has uid $uid.\n");
 
             # back up the LVM's lvm details. Get the config files.
-            system ("vgcfgbackup -f ${outputfilepath}metadata/LVM.backs.$pvname $pvname");
+            if (system ("vgcfgbackup -f ${outputfilepath}metadata/LVM.backs.$pvname $pvname > /dev/null") != 0 ) {
+                die ("Failed to back up $pvname!!\n");
+            }
 
+            print (MKLVS "echo Do we really need to do this pvcreate???\n");
             print (MKLVS "echo \"y\\n\" | pvcreate -ff --uuid \"$uid\"\\\n");
             print (MKLVS "    --restorefile ../metadata/lvm/backup/${pvname} $phv\n");
             print (MKLVS "vgcfgrestore --file ../metadata/LVM.backs.$pvname $pvname\n\n");
@@ -427,14 +464,14 @@ FINIS
         @fstab = <FSTAB>;
         foreach $line (@fstab) {
             @fstabs = split (" ", $line);
-            #                   Red Hat|Ubuntu
+            #                   Red Hat|Ubuntu/Debian
             if (@fstabs[0] =~ /VolGroup|mapper/ ) {
                 # print ("$line");
                 if (@fstabs[2] eq "swap") {
                     print (MKLVS "echo\necho making LV @fstabs[0] a swap partition.\n");
                     print (MKLVS "mkswap \$blockcheck @fstabs[0]\n\n");
                 } elsif (@fstabs[2] == "ext4") {
-                    print (MKLVS "echo\necho making LV @fstabs[0], @fstabs[1],");
+                    print (MKLVS "echo\necho making LV @fstabs[0], mounted on @fstabs[1],");
                     print (MKLVS " an ext4 partition.\n");
                     print (MKLVS "mke2fs -t ext4" . getextopts (@fstabs[0]));
                     print (MKLVS "\$blockcheck @fstabs[0]\n\n");
@@ -443,7 +480,7 @@ FINIS
                     print (MTLVS "mount @fstabs[0] /target$fstabs[1]\n\n");
                     $volsfound{@fstabs[0]} = 4;
                 } elsif (@fstabs[2] == "ext3") {
-                    print (MKLVS "echo\necho making LV @fstabs[0], @fstabs[1],");
+                    print (MKLVS "echo\necho making LV @fstabs[0], mounted on @fstabs[1],");
                     print (MKLVS " an ext3 partition.\n");
                     print (MKLVS "mke2fs -t ext3" . getextopts (@fstabs[0]));
                     print (MKLVS "\$blockcheck @fstabs[0]\n\n");
@@ -452,7 +489,7 @@ FINIS
                     print (MTLVS "mount @fstabs[0] /target$fstabs[1]\n\n");
                     $volsfound{@fstabs[0]} = 3;
                 } elsif (@fstabs[2] == "ext2") {
-                    print (MKLVS "echo\necho making LV @fstabs[0], @fstabs[1],");
+                    print (MKLVS "echo\necho making LV @fstabs[0], mounted on @fstabs[1],");
                     print (MKLVS " an ext2 partition.\n");
                     print (MKLVS "mke2fs \$blockcheck @fstabs[0]\n\n");
 
@@ -465,16 +502,18 @@ FINIS
             }
         }
 
-#         print ("Volumes already found are: ");
-#         while ( ($k, $v) = each %volsfound ) {
-#             print ("$k ==> $v ");
-#         }
-#         print ("\n");
+        print (MKLVS "# End of fstab device list.\n\n");
 
-        # Now walk the logical volume devices and pick up any
-        # partitions formated ext3/ext2. This may result in duplicates
-        # if the partitions have labels but are mounted by device name
-        # rather than by label.
+        #         print ("Volumes already found are: ");
+        #         while ( ($k, $v) = each %volsfound ) {
+        #             print ("$k ==> $v ");
+        #         }
+        #         print ("\n");
+
+        # Now walk the logical volume devices and pick up any partitions
+        # formated ext3/ext2/ext4. This may result in duplicates if the
+        # partitions have labels but are mounted by device name rather
+        # than by label.
 
         # FIX ME: This loop doesn't distinguish between ext3 and
         # ext4. It may not need to, as we pull the options from the
@@ -506,67 +545,71 @@ FINIS
                         # to a block device.
 
                         # Is it extX?
-                        open (DUMP, "dumpe2fs /dev/$fname/$vname 2> /dev/null|");
+                        if (! system ("dumpe2fs /dev/$fname/$vname 1> /dev/null 2>&1")) {
 
-                        @lines = <DUMP>;
+                            # Is it extX?
+                            open (DUMP, "dumpe2fs /dev/$fname/$vname 2> /dev/null|");
 
-                        if (scalar (@lines) > 1) {
+                            @lines = <DUMP>;
 
-                            # If we've gotten here we have a valid
-                            # ext[2|3|4] file system. Now prepare to
-                            # spit out the commands to recreate
-                            # it. Get the label, if any, and whether
-                            # there is a journal or not.
+                            # if it is short, it is most likely an error message.
+                            if (scalar (@lines) > 5) {
 
-                            foreach $_ (@lines) {
-                                if (/Filesystem volume name:/) {
-                                    $label = substr ($_, 26);
-                                    chop ($label);
-#                                     print ("\$label is \"$label\".\n");
+                                # If we've gotten here we have a valid
+                                # ext[2|3|4] file system. Now prepare to
+                                # spit out the commands to recreate
+                                # it. Get the label, if any, and whether
+                                # there is a journal or not.
+
+                                foreach $_ (@lines) {
+                                    if (/Filesystem volume name:/) {
+                                        $label = substr ($_, 26);
+                                        chop ($label);
+#                                         print ("\$label is \"$label\".\n");
+                                    }
+                                    if (/has_journal/) {
+                                        $journal = 1;
+                                    }
+
                                 }
-                                if (/has_journal/) {
-                                    $journal = 1;
+
+                                # get the mount point from fstab so we can mount it.
+                                $mountpoint = "none!";
+                                foreach $fstab (@fstab) {
+                                    @fstabs = split (" ", $line);
+                                    if (@fstabs[0] eq "LABEL=$label" ) {
+                                        $mountpoint = @fstabs[1];
+                                        #                                     print ("mount point is \"$mountpoint\".\n");
+                                        last;
+                                    }
+                                }
+                                if (length ($label) ) {
+                                    $label = "-L \"" . $label . "\"";
                                 }
 
+                                if ($journal > 0) {
+                                    print (MKLVS "echo\necho making LV /dev/$fname/$vname");
+                                    print (MKLVS " an ext3/4 partition.\n");
+                                    print (MKLVS "mke2fs" . getextopts ("/dev/$fname/$vname"));
+                                    print (MKLVS "$label \$blockcheck /dev/$fname/$vname\n\n");
+
+                                    if ($mountpoint ne "none!") {
+                                        print (MTLVS "mkdir -p /target$mountpoint\n");
+                                        print (MTLVS "mount /dev/$fname/$vname /target$mountpoint\n\n");
+                                    }
+                                } else {
+                                    print (MKLVS "echo\necho making LV /dev/$fname/$vname");
+                                    print (MKLVS " an ext2 partition.\n");
+                                    print (MKLVS "mke2fs $label \$blockcheck /dev/$fname/$vname\n\n");
+
+                                    if ($mountpoint ne "none!") {
+                                        print (MTLVS "mkdir -p /target$mountpoint\n");
+                                        print (MTLVS "mount /dev/$fname/$vname /target$mountpoint\n\n");
+                                    }
+                                }
                             }
-
-                            # get the mount point from fstab so we can mount it.
-                            $mountpoint = "none!";
-                            foreach $fstab (@fstab) {
-                                @fstabs = split (" ", $line);
-                                if (@fstabs[0] eq "LABEL=$label" ) {
-                                    $mountpoint = @fstabs[1];
-#                                     print ("mount point is \"$mountpoint\".\n");
-                                    last;
-                                }
-                            }
-                            if (length ($label) ) {
-                                $label = "-L \"" . $label . "\"";
-                            }
-
-                            if ($journal > 0) {
-                                print (MKLVS "echo\necho making LV /dev/$fname/$vname");
-                                print (MKLVS " an ext3/4 partition.\n");
-                                print (MKLVS "mke2fs" . getextopts ("/dev/$fname/$vname"));
-                                print (MKLVS "$label \$blockcheck /dev/$fname/$vname\n\n");
-
-                                if ($mountpoint ne "none!") {
-                                  print (MTLVS "mkdir -p /target$mountpoint\n");
-                                  print (MTLVS "mount /dev/$fname/$vname /target$mountpoint\n\n");
-                                }
-                              } else {
-                                print (MKLVS "echo\necho making LV /dev/$fname/$vname");
-                                print (MKLVS " an ext2 partition.\n");
-                                print (MKLVS "mke2fs $label \$blockcheck /dev/$fname/$vname\n\n");
-
-                                if ($mountpoint ne "none!") {
-                                  print (MTLVS "mkdir -p /target$mountpoint\n");
-                                  print (MTLVS "mount /dev/$fname/$vname /target$mountpoint\n\n");
-                                }
-                              }
                         }
                     }
-
                 }
                 closedir (VOLHANDLE);
             }
@@ -688,6 +731,15 @@ if ( -l $device) {
 
 # We select a format string according to fdisk's version.
 
+# Unfortunately, some time between version 2.12 and 2.25 (on Debian
+# jessie, 8.x), the authors switched to a variable column width. So we
+# use unpack for the earlier versions, and split for the later
+# ones. We could probably get away with using split for them all, but
+# I no longer have older versions with which to test. Volunteers?
+
+# I would appreciate any help in nailing down the relevant version
+# numbers.
+
 $fdpid = open (FDVER, "fdisk -v |") or die "Couldn't fork: $!\n";
 while (<FDVER>) {
     @_ = unpack ("A7 A*", $_);
@@ -700,8 +752,8 @@ while (<FDVER>) {
 if ($fdver < 2.12) {
 # fdisk to 2.11?? Red Hat, Fedora Core 1
     $fmt = cut2fmt (11, 19, 24, 34, 45, 49);
-} else {
-# fdisk 2.12 & up?? Mandrake 10.0, Fedora Core 2
+} elsif ($fdver < 2.20 ) {      # 2.25 on Debian jessie 8.x
+    # fdisk 2.12 & up?? Mandrake 10.0, Fedora Core 2
     $fmt = cut2fmt (12, 14, 26, 38, 50, 55);
 }
 # print "Format string is $fmt.\n";
@@ -723,21 +775,25 @@ $outputfilename = substr ($outputfilename, 1, 100);
 # Make a hash of the labels.
 $mpid = open (MOUNT, "mount -l |") or die "Couldn't fork: $!\n";
 while (<MOUNT>) {
-    if ($_ =~ /^$mountdev/i) { # is this a line with a partition in it?
+    if ($_ =~ /^$mountdev/i) {  # is this a line with a partition in it?
         chop;
         # print "mount line is \"$_\"\n"; # print it just for grins
-        split;
-        if ($_[6] ne "") {      # only process if there actually is a label
-            $_[6] =~ s/[\[\]]//g; # strike [ and ].
+        @_ = split;
+        if ($_[6] ne "") {     # only process if there actually is a label
+            $_[6] =~ s/[\[\]]//g;     # strike [ and ].
             $labels{$_[0]} = $_[6];
 #           print "The label of file device $_[0] is $labels{$_[0]}.\n";
         }
 
+        # foreach $el (@_) {
+        #     print ("Element is $el\n");
+        # }
 
         # We only mount if it's ext2fs, ext3fs, or ext4fs, and read
         # and write.
 
         if ($_[4] =~ /ext[234]/ and $_[5] =~ /\(rw/ ) {
+            # print ("R/W ext[234] partition found.\n");
             if ($_[0] =~ /ide/i) {
 
                 # We have a devfs system, e.g. Mandrake. This code
@@ -780,21 +836,46 @@ open (OUTPUT, "> ${outputfilepath}metadata/${outputfilename}")
     or die "Couldn't open output file ${outputfilepath}metadata/${outputfilename}.\n";
 
 while (<FDISK>) {
-    if ($_ =~ /^$device/i) {    # is this a line with a partition in it?
-#       print $_;               # print it just for grins
-        chop;                   # kill trailing \r
-        @_ = unpack ($fmt, $_);
+    if ($_ =~ /^$device/i) { # is this the line with our partition in it?
+        $bootFlag = 0;
+
+        # print $_;               # print it just for grins
+        chop;                       # kill trailing \r
+
+        if ($fdver > 2.25) {
+            # Unfortunately, split does not get rid of the bootable
+            # flag asterisk for us.
+            @_ = split;
+
+            # Now we get rid of the bootable flag (and note it in passing).
+            if (@_[$bootable] eq '*') {
+                $bootFlag = $device;
+                splice (@_, 1, 1);
+            }
+            # print ("using split on the output of fdisk.\n");
+        } else {
+            @_ = unpack ($fmt, $_);
+            if (@_[$bootable] =~ /\*/) {
+                $bootFlag = $device;
+            }
+        }
 
         # Now strip white spaces from cylinder numbers, white space &
         # leading plus signs from partition type.
         @_[$firstcyl] =~ s/[ \t]+//;
         @_[$lastcyl] =~ s/[ \t]+//;
+        @_[$partstring] =~ s/[ \t]+//;
         @_[$parttype] =~ s/[+ \t]+//;
 
         $partnumber = substr(@_[$dev], 8, 10); # get partition number for this line
+
         # just for grins
-#         print "  $partnumber, @_[$firstcyl], @_[$lastcyl],";
-#         print " @_[$parttype], @_[$partstring]\n";
+        # print "Partition: |$partnumber|, |@_[$firstcyl]|, |@_[$lastcyl]|,";
+        # print " Type: |@_[$parttype]|, String: |@_[$partstring]|\n";
+
+        # foreach $el (@_) {
+        #     print ("Element is $el\n");
+        # }
 
         # Here we start creating the input to recreate the partition
         # this line represents.
@@ -809,42 +890,28 @@ while (<FDISK>) {
                     print OUTPUT "@_[$lastcyl]\n";
                 }
 
-#                 # Now detect if this is an ext3 (journaling)
-#                 # partition. We do this using dumpe2fs to dump the
-#                 # partition and grepping on "journal". If the
-#                 # partition is ext2, there will be no output. If it is
-#                 # ext3, there will be output, and we use that fact to
-#                 # set a command line switch. The command line switch
-#                 # goes into an associative array (hash) so we don't
-#                 # have to remember to reset it to the null string when
-#                 # we're done.
-
-#                 $dpid = open (DUMPE2FS,
-#                               "dumpe2fs @_[$dev] 2>/dev/null | grep -i journal |")
-#                     or die "Couldn't fork: $!\n";
-#                 while (<DUMPE2FS>) {
-# #                   print "Dumpe2fs: $_";
-#                     $ext3{$_[$dev]} = "-j ";
-#                     last;
-#                 }
-#                 close (DUMPE2FS);
-
-                if ($labels{@_[$dev]}) { # do we have a label?
-                    $format .= "echo\necho formatting $checking@_[$dev]\n";
-                    # $format .= "mke2fs $ext3{$_[$dev]}\$blockcheck";
-                    # $format .= " -L $labels{@_[$dev]} @_[$dev]\n";
-                    $format .= "mke2fs" . getextopts ($_[$dev]) . "\$blockcheck";
-                    $format .= " -L $labels{@_[$dev]} @_[$dev]\n";
+                if (system ("cryptsetup isLuks @_[$dev]") == 0) {
+                    # print ("@_[$dev] is a logical LUKS partition! Woo Hoo!!\n");
+                    &doluks (@_[$dev]);
                 } else {
-                    $format .= "echo\necho formatting $checking@_[$dev]\n";
-                    # $format .= "mke2fs $ext3{$_[$dev]}\$blockcheck @_[$dev]\n";
-                    $format .= "mke2fs" . getextopts ($_[$dev]) . "\$blockcheck @_[$dev]\n";
-                }
-                $uuid = getuuid ($_[$dev]);
-                if (length ($uuid) > 0) {
-                    $format .= "tune2fs -U $uuid @_[$dev]\n";
-                }
 
+                    if ($labels{@_[$dev]}) { # do we have a label?
+                        $format .= "echo\necho formatting $checking@_[$dev]\n";
+                        # $format .= "mke2fs $ext3{$_[$dev]}\$blockcheck";
+                        # $format .= " -L $labels{@_[$dev]} @_[$dev]\n";
+                        $format .= "mke2fs" . getextopts ($_[$dev]) . "\$blockcheck";
+                        $format .= " -L $labels{@_[$dev]} @_[$dev]\n";
+                    } else {
+                        $format .= "echo\necho formatting $checking@_[$dev]\n";
+                        # $format .= "mke2fs $ext3{$_[$dev]}\$blockcheck @_[$dev]\n";
+                        $format .= "mke2fs" . getextopts ($_[$dev]) . "\$blockcheck @_[$dev]\n";
+                    }
+                    $uuid = getuuid ($_[$dev]);
+                    if (length ($uuid) > 0) {
+                        $format .= "tune2fs -U $uuid @_[$dev]\n";
+                    }
+
+                }
                 $format .= "\n";
 
                 # extended partition
@@ -934,42 +1001,27 @@ while (<FDISK>) {
                     print OUTPUT "@_[$lastcyl]\n";
                 }
 
-#                 # Now detect if this is an ext3 (journaling)
-#                 # partition. We do this using dumpe2fs to dump the
-#                 # partition and grepping on "journal". If the
-#                 # partition is ext2, there will be no output. If it is
-#                 # ext3, there will be output, and we use that fact to
-#                 # set a command line switch. The command line switch
-#                 # goes into an associative array (hash) so we don't
-#                 # have to remember to reset it to the null string when
-#                 # we're done.
-
-#                 $dpid = open (DUMPE2FS,
-#                               "dumpe2fs @_[$dev] 2>/dev/null | grep -i journal |")
-#                     or die "Couldn't fork: $!\n";
-#                 while (<DUMPE2FS>) {
-# #                   print "Dumpe2fs: $_";
-#                     $ext3{$_[$dev]} = "-j ";
-#                     last;
-#                 }
-#                 close (DUMPE2FS);
-
-                if ($labels{@_[$dev]}) { # do we have a label?
-                    $format .= "echo\necho formatting $checking@_[$dev]\n";
-                    # $format .= "mke2fs $ext3{@_[$dev]}\$blockcheck";
-                    # $format .= " -L $labels{@_[$dev]} @_[$dev]\n";
-                    $format .= "mke2fs" . getextopts ($_[$dev]) . "\$blockcheck";
-                    $format .= " -L $labels{@_[$dev]} @_[$dev]\n";
+                if (system ("cryptsetup isLuks @_[$dev]") == 0) {
+                    # print ("@_[$dev] is a logical LUKS partition! Woo Hoo!!\n");
+                    doluks (@_[$dev]);
                 } else {
-                    $format .= "echo\necho formatting $checking@_[$dev]\n";
-                    # $format .= "mke2fs $ext3{@_[$dev]}\$blockcheck @_[$dev]\n";
-                    $format .= "mke2fs" . getextopts ($_[$dev]) . "\$blockcheck @_[$dev]\n";
-                }
-                $uuid = getuuid ($_[$dev]);
-                if (length ($uuid) > 0) {
-                    $format .= "tune2fs -U $uuid @_[$dev]\n";
-                }
 
+                    if ($labels{@_[$dev]}) { # do we have a label?
+                        $format .= "echo\necho formatting $checking@_[$dev]\n";
+                        # $format .= "mke2fs $ext3{@_[$dev]}\$blockcheck";
+                        # $format .= " -L $labels{@_[$dev]} @_[$dev]\n";
+                        $format .= "mke2fs" . getextopts ($_[$dev]) . "\$blockcheck";
+                        $format .= " -L $labels{@_[$dev]} @_[$dev]\n";
+                    } else {
+                        $format .= "echo\necho formatting $checking@_[$dev]\n";
+                        # $format .= "mke2fs $ext3{@_[$dev]}\$blockcheck @_[$dev]\n";
+                        $format .= "mke2fs" . getextopts ($_[$dev]) . "\$blockcheck @_[$dev]\n";
+                    }
+                    $uuid = getuuid ($_[$dev]);
+                    if (length ($uuid) > 0) {
+                        $format .= "tune2fs -U $uuid @_[$dev]\n";
+                    }
+                }
                 $format .= "\n";
 
                 # logical Linux swap partition
@@ -1035,8 +1087,9 @@ while (<FDISK>) {
         }
 
         # handle bootable partitions
-        if (@_[$bootable] =~ /\*/) {
+        if ($bootFlag) {
             print OUTPUT "a\n$partnumber\n";
+            print ("Partition $device is bootable.\n");
         }
     } else {
         # If we got here, the current line does not have a partition in it.
@@ -1080,6 +1133,7 @@ FINIS
 print OUTPUT <<FINIS;
 
 swapoff -a
+
 # Hideously disty dependent! Turn off LVM.
 if [ -e /etc/init.d/lvm ] ; then
     /etc/init.d/lvm stop
@@ -1121,7 +1175,7 @@ $fdiskcmd .= "fi\n\nsync\n\n";
 print OUTPUT $fdiskcmd;
 print OUTPUT $format;
 
-print OUTPUT "fdisk -l \"$device\"\n";
+print OUTPUT "fdisk -l $device\n";
 
 close (OUTPUT);
 
@@ -1167,6 +1221,7 @@ FINIS
 print OUTPUT "mkdir -p $target\n";
 
 foreach $point ( sort keys %mountpoints) {
+#     print ("Mount point is $point.\n");
     print OUTPUT "\n# $point is the mountpoint for";
     print OUTPUT " device $mountpoints{$point}.\n";
     print OUTPUT "mkdir -p $target$point\n";
