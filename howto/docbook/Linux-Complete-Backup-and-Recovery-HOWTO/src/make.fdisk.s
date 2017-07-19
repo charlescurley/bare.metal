@@ -231,7 +231,7 @@
 # For more information contact the author, Charles Curley, at
 # http://www.charlescurley.com/.
 
-use UUID;			# for validating uuids.
+use UUID;                       # for validating uuids.
 
 # cut2fmt figures out the format string for the unpack function we use
 # to slice and dice the output from fdisk. From Christiansen and
@@ -603,10 +603,10 @@ sub getuuid {
         chop ($uuid);
         # print ("$uuid\n");
 
-	if (UUID::parse($uuid, my $rawUuid) != -1) {
-	    # print ("Device $device has uuid '$uuid'.\n");
-	    return ($uuid);
-	}
+        if (UUID::parse($uuid, my $rawUuid) != -1) {
+            # print ("Device $device has uuid '$uuid'.\n");
+            return ($uuid);
+        }
     }
     return ('');
 }
@@ -872,10 +872,10 @@ while (<FDISK>) {
                 }
                 $typechanges .= "t\n$partnumber\n82\n";
                 $format .= "echo\necho Making @_[$dev] a swap partition.\n";
-		$format .= "mkswap \$blockcheck ";
+                $format .= "mkswap \$blockcheck ";
                 $uuid = getuuid ($_[$dev]);
                 if (length ($uuid) > 0) {
-		    $format .= "-U $uuid ";
+                    $format .= "-U $uuid ";
                 }
                 if ($labels{@_[$dev]}) { # do we have a label?
                     $format .= "-L $labels{@_[$dev]} ";
@@ -980,10 +980,10 @@ while (<FDISK>) {
                 }
                 $typechanges .= "t\n$partnumber\n82\n";
                 $format .= "echo\necho Making @_[$dev] a swap partition.\n";
-		$format .= "mkswap \$blockcheck ";
+                $format .= "mkswap \$blockcheck ";
                 $uuid = getuuid ($_[$dev]);
                 if (length ($uuid) > 0) {
-		    $format .= "-U $uuid ";
+                    $format .= "-U $uuid ";
                 }
                 if ($labels{@_[$dev]}) { # do we have a label?
                     $format .= "-L $labels{@_[$dev]} ";
