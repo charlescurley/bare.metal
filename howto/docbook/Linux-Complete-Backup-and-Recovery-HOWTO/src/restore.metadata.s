@@ -47,11 +47,11 @@
 
 umask 0000
 
-cd ..                           # Assume we are in /bin
-zip=$(pwd)/data;              # Where we find the tarballs to restore.
+cd ..                    # Assume we are in /bin
+zip=$(pwd)/data;         # Where we find the tarballs to restore.
 target="/target";        # Where the hard drive to restore is mounted.
 
-ls -lt $zip/*.bz2               # Warm fuzzies for the user.
+ls -lt $zip/*.bz2        # Warm fuzzies for the user.
 
 cd $target
 
