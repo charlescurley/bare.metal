@@ -179,7 +179,7 @@ echo "Saving hard drive info"
 # things done at restore time.
 
 # for drive in sda ; do
-for drive in $(ls /dev/[hsv]d?) ; do
+for drive in $(ls /dev/[hsv]d? | cut -c6-10) ; do
     echo Processing drive ${drive}
     fdisk -l /dev/${drive} | grep GPT > /dev/null
     if [ $? = '0' ] ; then
