@@ -82,6 +82,7 @@ for dir in\
    selinux\
    sys\
    tmp/.font-unix\
+   usr/share\
    var/cache/yum\
    var/empty/sshd/etc\
    var/lib/bare.metal.recovery\
@@ -102,8 +103,8 @@ done
 
 # Set modes
 chmod 0111 $target/var/empty/sshd
-chown root:lock $target/var/lock
-chmod 775 $target/var/lock
+chmod 777 $target/var/lock
+chmod o+t $target/var/lock
 chmod 711 $target/var/empty/sshd
 chmod 700 $target/var/lib/bare.metal.recovery
 
