@@ -761,7 +761,7 @@ if ($fdver < 2.12) {
 # define fields in the array @_.
 $dev = 0;
 $bootable = 1;
-$firstcyl = 2;
+$firstcyl = 1;
 $lastcyl = 3;
 $parttype = 5;
 $partstring = 6;
@@ -825,8 +825,7 @@ close (MOUNT);
 # Get sfdisk output. If we have sfdisk at restore time (e.g. Knoppix),
 # we'll use it.
 
-system "sfdisk -d $device > ${outputfilepath}metadata/${outputfilename}.sfd.txt";
-system "sfdisk -O $device > ${outputfilepath}metadata/${outputfilename}.sfd";
+system "sfdisk --dump $device > ${outputfilepath}metadata/${outputfilename}.sfd";
 
 # Otherwise we'll use the output from fdisk, which may or may not be
 # any more accurate.
@@ -1166,7 +1165,7 @@ print OUTPUT "dd if=/dev/zero of=$device bs=1024 count=2000\n\nsync\n\n";
 $fdiskcmd .= "# see if we have sfdisk & if so use it.\n";
 $fdiskcmd .= "if which sfdisk ; then\n";
 $fdiskcmd .= "  echo \"Using sfdisk.\"\n";
-$fdiskcmd .= "  sfdisk $geometry $device -I ../metadata/${outputfilename}.sfd\n";
+$fdiskcmd .= "  sfdisk $device < ../metadata/${outputfilename}.sfd\n";
 $fdiskcmd .= "else\n";
 $fdiskcmd .= "  echo \"using fdisk.\"\n";
 $fdiskcmd .= "  fdisk $geometry $device \< ../metadata/$outputfilename\n";
