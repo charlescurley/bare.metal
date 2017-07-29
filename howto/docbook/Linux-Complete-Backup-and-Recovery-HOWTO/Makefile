@@ -28,7 +28,7 @@ dslhtml = -d $(ldpdslpath)/ldp.dsl\\\#html
 dslprint = -d $(ldpdslpath)/ldp.dsl\\\#print
 
 # All the scripts we depend on....
-SCRIPTS := $(shell ls scripts/*)
+SCRIPTS := $(shell ls src/*)
 
 cooked:
 	-mkdir cooked scripts $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
@@ -107,10 +107,10 @@ pdf: $(DOCUMENT).pdf
 
 all: html rtf tex dvi ps pdf text
 
-$(DOCUMENT)-$(VERSION).tar.bz2: bare.metal.backup.excludes README src $(DOCUMENT).sgml Makefile images COPYING ldp.dsl all
 	# The source tarball for download
+$(DOCUMENT)-$(VERSION).tar.bz2: bare.metal.backup.excludes README src $(DOCUMENT).sgml Makefile images COPYING ldp.dsl all
 	mkdir -p $(DOCUMENT)-$(VERSION)
-	cp -rp bare.metal.backup.excludes README src scripts $(SCRIPTS) $(DOCUMENT).sgml Makefile images $(DOCUMENT)-$(VERSION)
+	cp -rp bare.metal.backup.excludes README src scripts $(DOCUMENT).sgml Makefile images $(DOCUMENT)-$(VERSION)
 	-cp -rpL COPYING ldp.dsl $(DOCUMENT)-$(VERSION)
 	rm -rf $(DOCUMENT)-$(VERSION)/scripts/*~
 	rm -rf $(DOCUMENT)-$(VERSION)/src/*~
