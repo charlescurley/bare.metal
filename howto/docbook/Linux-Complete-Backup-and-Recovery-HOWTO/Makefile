@@ -155,7 +155,7 @@ ship: all dist
 
 
 	# The source for download. Requires dist:. But run it first, sign the RPMs, then run ship:.
-	cp -rp $(DOCUMENT)-$(VERSION).tar.bz2 $(DOCUMENT).spec  $(SERVER)/
+	cp -rp $(DOCUMENT)-$(VERSION).tar.bz2 $(SERVER)/
 
 # 	mkdir -p $(SERVER)/srpms $(SERVER)/rpms
 
@@ -165,7 +165,7 @@ ship: all dist
 # 	createrepo -q $(SERVER)/srpms
 # 	createrepo -q $(SERVER)/rpms
 
-	cd $(SERVER) ; sha256sum *.bz2 *.spec > sha256sums ; sha1sum *.bz2 *.spec > sha1sums
+	cd $(SERVER) ; sha256sum *.bz2 > sha256sums ; sha1sum *.bz2 > sha1sums
 	ls -l $(SERVER)
 
 install:
