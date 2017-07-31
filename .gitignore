@@ -1,8 +1,10 @@
 # directories to ignore
 **cooked
 **dist
-**Linux-Complete-Backup-and-Recovery-HOWTO
+**Linux-Complete-Backup-and-Recovery-HOWTO.junk
+**scripts
 **smooth
+howto/docbook/Linux-Complete-Backup-and-Recovery-HOWTO/Linux-Complete-Backup-and-Recovery-HOWTO
 
 *.aux
 *.bz2
