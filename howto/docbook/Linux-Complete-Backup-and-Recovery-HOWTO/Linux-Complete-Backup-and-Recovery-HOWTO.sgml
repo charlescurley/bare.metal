@@ -73,6 +73,12 @@ Change notes:
       <!-- Additional revision history entries go here -->
       <!-- Can we automate this? C^2 -->
       <revision>
+        <revnumber>2.11</revnumber>
+        <date>2017-07-29</date>
+        <authorinitials>c^2</authorinitials>
+        <revremark>Several improvements after working with Debian 9.</revremark>
+      </revision>
+      <revision>
         <revnumber>2.10</revnumber>
         <date>2017-07-12</date>
         <authorinitials>c^2</authorinitials>
@@ -462,7 +468,7 @@ Change notes:
       <title>WARNING</title>
       <para>Recent kernels have incorporated a new ATA (IDE) hard drive driver, libata. Because of this, parallel ATA drives (PATA) now show up as SCSI drives, as serial ATA (SATA) have always done. However, not all rescue distributions use this new driver. There is a line toward the bottom of <link linkend="save.metadata"><filename>save.metadata</filename></link> which very carefully replaces "/dev/sda" with "/dev/hda". Use this as a template if you have multiple IDE hard drives. Comment it out or delete it if this is not an issue for you.</para>
       <para>Note that there is no guaranteed mapping! Systems with multiple hard drives may have confusing mappings. Be sure to edit this line carefully. Check it if you add or remove a hard drive of any interface type to or from your system!</para>
-      <para>N.B: if you have libata IDE drive issues, the grub-install line at the end of <link linkend="restore.metadata"><filename>restore.metadata</filename></link> won't work. If it doesn't, use your rescue disk to do the same. Or burn and boot to the boot image that is made as part of the first stage backup. Boot to it and do the second state restore as usual. The second state restore should re-run <filename>grub-install</filename> or you can run it manually.</para>
+      <para>N.B: if you have libata IDE drive issues, the grub-install line at the end of <link linkend="restore.metadata"><filename>restore.metadata</filename></link> won't work. If it doesn't, use your rescue disk to do the same. Or burn and boot to the boot image that is made as part of the first stage backup. Boot to it and do the second stage restore as usual. The second stage restore should re-run <filename>grub-install</filename> or you can run it manually.</para>
     </note>
     <sect2>
       <title id="thearchive">The Archive</title>
@@ -536,6 +542,8 @@ Change notes:
       <sect3 id="bootingfinnix">
         <title>Finnix</title>
         <para>One option for booting <ulink url="http://www.finnix.org/">Finnix</ulink> is the &quot;toram&quot; option, which lets you move the whole kazoo into RAM. That in turn should let you load another CD, with your first stage data, into the CD drive.</para>
+        <para>Should you run into problems with <command>grub-install</command>, see <ulink url="https://www.finnix.org/Restoring_bootloaders">Restoring bootloaders</ulink> in the Finnix wiki.</para>
+        <para>If it is possible that there is a LUKS or LVM partition on the hard drive, but you don't want to access them on boot (because you are about to write over them anyway, say), add the <command>nocrypt</command> or <command>nolvm</command> options to the boot command line. There are more <ulink url="https://www.finnix.org/Boot_parameters">boot parameters</ulink> available.</para>
       </sect3>
       <sect3 id="Bootingknoppix">
         <title>Knoppix</title>
@@ -608,13 +616,17 @@ Change notes:
         <screen><![ CDATA [Added linux *]]></screen>
         <para>That will be followed by the output from a <quote><command>df -m</command></quote> command.</para>
       </sect3>
-      <sect3>
+      <sect3 id="finishing">
         <title>Finishing Touches</title>
-        <para>If you normally boot directly to X, you could have some problems. To be safe, the first stage script changes the run level in <filename>/target/etc/inittab</filename> to 3. Note: different distributions use different run level schemes. 3 works on Red Hat derived distributions; it may not on others.</para>
+        <para>If you normally boot directly to X, you could have some problems.</para>
+        <para>On System V installations, to be safe, the first stage script changes the run level in <filename>/target/etc/inittab</filename> to 3. Note: different distributions use different run level schemes. 3 works on Red Hat derived distributions; it may not on others.</para>
+        <para>On systemd installations (and probably others), you can avoid problems by booting into recovery mode. Or edit the <ulink url="https://fedoraproject.org/wiki/Systemd#Boot_Kernel_Command_Line">command line at boot time</ulink>. If there is a better way to do this, I'd like to hear about it.</para>
         <para>You can now gracefully reboot. Remove the medium from your boot drive if you haven't already done so, and give the computer the three fingered salute, or its equivalent:</para>
         <programlisting># <command>shutdown -r now</command></programlisting>
         <para>or</para>
         <programlisting># <command>reboot</command></programlisting>
+        <para>or</para>
+        <programlisting># <command>systemctl reboot</command></programlisting>
         <para>The computer will shut down and reboot.</para>
       </sect3>
     </sect2>
@@ -663,6 +675,7 @@ diff /mnt/zip/metadata/rpmVa.txt ~/foo.txt</command></programlisting>
       <title>Debian/Ubuntu</title>
       <para>The largest change for Debian based systems is the lack of anything analogous to RPM's integrity checking capability, <command>rpm -Va</command>, which we use to check for correct restoration. <command>debsums</command> is close but has other problems. You must install <command>debsums</command>, as soon after you have installed the system as possible. You must then run <command>apt-get clean && debsums_init</command>. This command will force the reinstallation of packages for which checksums have not already been generated. Package reinstallation can affect configuration files. Also see the caveats section of the <command>debsums</command> man page.</para>
       <para>The most practical problem is that Debian and Ubuntu use UUIDs to identify partitions, rather than device files or labels (like Red Hat systems). We can preserve the UUIDs, and assign them to ext2/3/4 and swap partitions. Actually, we can get UUIDs for any partition <command>blkid</command> supports.</para>
+      <para>When using a Debian live CD, create a root password with <command>sudo passwd root</command>. Then <command>su -</command> as usual. Packages you may want to install: <command>apt install cryptsetup lvm2 grub2-common</command>. If the screen saver locks you out, log in again as user/live.</para>
     </sect2>
     <sect2 id="fedora3">
       <title>Fedora</title>
@@ -695,6 +708,17 @@ diff /mnt/zip/metadata/rpmVa.txt ~/foo.txt</command></programlisting>
 	  <para>Handling logical volumes turns out to be a bit of a trick: use the <ulink url="http://www.finnix.org/">Finnix</ulink> distribution's startup code to turn LVM on and off. This results in distribution specific code for the first stage of restoration. It is generated in <link linkend="make.fdisk"><filename>make.fdisk</filename></link>. To edit it, search <link linkend="make.fdisk"><filename>make.fdisk</filename></link> for <quote>Hideous</quote>.</para>
 	  <para>LVM required the addition of two new LVM specific scripts, <link linkend="make.lvs"><command>make.lvs</command></link> and <link linkend="mount.lvs"><command>mount.lvs</command></link>. They are only generated and used if there are logical volumes present.</para>
 	</sect2>
+    <sect2 id="luks">
+      <title>LUKS</title>
+      <para><ulink url="https://gitlab.com/cryptsetup/cryptsetup">LUKS</ulink> allows a user to encrypt a partition. One can then use LVM to install multiple partitions in the encrypted partition.</para>
+      <warning>
+        <para>When rebuilding a LUKS partition, you must know the passphrase! We do not handle that!</para>
+      </warning>
+    </sect2>
+    <sect2 id="systemd">
+      <title>systemd</title>
+      <para><ulink url="https://fedoraproject.org/wiki/Systemd">systemd</ulink> is a replacement for the System V init scripts formerly common on Linux. The main impact is that systemd replaces System V run levels with targets. See <ulink url="https://fedoraproject.org/wiki/Systemd#Boot_Kernel_Command_Line">Boot Kernel Command Line</ulink> for how to edit the command line when you boot after <link linkend="finishing">first stage restoration</link>.</para>
+    </sect2>
     <sect2 id="selinux">
       <title>Selinux</title>
       <para>Selinux is disabled on the test machines. <filename>/selinux</filename> is not backed up in any of these scripts. At a guess, you should probably disable selinux after the first stage restoration, and you will probably have some selinux specific tasks to perform before turning it back on.</para>
@@ -756,15 +780,16 @@ tar cf - usr/knox | gzip -c > $zip/arkeia.tar.gz]]></programlisting>
 </programlisting>
       <para>where <command>$file</command> is the script's argument, the image recovered from the tape by <command>amrestore</command>.</para>
       <para>Since the command line arguments to <command>tar</command> prohibit over-writing, restore from images in the <emphasis>reverse</emphasis> of the order in which they were made. Restore most recent first.</para>
-      <para>Amanda does require setting ownership by hand if you back up the amanda data directory with <link linkend="save.metadata"><filename>save.metadata</filename></link>. Something like:</para>
+      <para>Amanda may require setting ownership by hand if you back up the amanda data directory with <link linkend="save.metadata"><filename>save.metadata</filename></link>. Something like:</para>
       <programlisting>bash# <command>chown -R amanda:disk /var/lib/amanda</command></programlisting>
       <para>You can also add that line to your scripts for second state restoration, such as <link linkend="restore"><filename>restore</filename></link>.</para>
+      <para><link linkend="save.metadata">save.metadata</link>now has support for backing up enough of Amanda to use <command>amrecover</command>. However, this may mean you have to run <link linkend="save.metadata">save.metadata</link> often in order to keep the saved data in synch with amanda's backups.</para>
     </sect2>
 	<sect2 id="ntfs">
 	  <title>NTFS</title>
 	  <para>OK, NTFS isn't an application. It is a file system used by Microsoft operating system Windows NT and its descendents, including Windows 2000 and Windows XP. You can back it up and restore to it from Linux with <command>ntfsclone</command>, one of the NTFS utilities in the ntfsprogs suite, available from <ulink url="http://www.linux-ntfs.org/">http://www.linux-ntfs.org/</ulink>.</para>
 	  <para>These scripts will create NTFS partitions, but will not put a file system on them. It is not clear from the docs whether <command>ntfsclone</command> will lay down a file system on a virgin partition or not.</para>
-	</sect2>
+    </sect2>
   </sect1>
   <sect1 id="SomeAdviceforDisasterRecovery">
     <title>Some Advice for Disaster Recovery</title>
@@ -866,6 +891,7 @@ tar cf - usr/knox | gzip -c > $zip/arkeia.tar.gz]]></programlisting>
         <title><filename>restore.metadata</filename></title>
         <para>This script restores metadata from the ZIP disk as a first stage restore.</para>
         <para> N.B: if you have libata IDE drive issues, the grub-install line at the end of this script won't work. If it doesn't, use your rescue disk to do the same.</para>
+        <para>This script runs <command>grub-install</command> toward the end. It may fail. In that case, <ulink url="https://sourceforge.net/p/boot-repair/home/Home/">Boot-Repair</ulink> may repair it for you. Be sure to check options before letting it do its thing.</para>
         <programlisting>&restore.metadata;</programlisting>
       </sect3>
       <sect3 id="first.stage">
@@ -902,7 +928,7 @@ tar cf - usr/knox | gzip -c > $zip/arkeia.tar.gz]]></programlisting>
     <sect2 id="BackupServerScripts">
       <title>Backup Server Scripts</title>
       <para>The SSH scripts above have a possible security problem. If you run them on a firewall, the firewall has to have access via SSH to the backup server. In that case, a clever cracker might also be able to crack the backup server. It would be more secure to run backup and restore scripts on the backup server, and let the backup server have access to the firewall. That is what these scripts are for.</para>
-      <para>These scripts backup and restore the target completely, not just the stage one backup and restore. <filename>get</filename> backs up the bare metal archive separately so that you can make a CD-ROM ir NFS mount from it.</para>
+      <para>These scripts backup and restore the target completely, not just the stage one backup and restore. <filename>get</filename> backs up the bare metal archive separately so that you can make a CD-ROM or NFS mount from it.</para>
       <para>I use these scripts routinely.</para>
       <sect3 id="get">
         <title><filename>get</filename></title>
@@ -971,6 +997,8 @@ tar cf - usr/knox | gzip -c > $zip/arkeia.tar.gz]]></programlisting>
       <listitem>
         <para>CD-ROM based rescue kits. This is not intended to be an exhaustive list. If you know of one (or even something that pretends to be one), please <ulink url="&myemail;">let me know</ulink>. You may find more recent information at <ulink url="http://www.distrowatch.com/">DistroWatch</ulink>.</para>
         <itemizedlist>
+          <listitem>
+            <para><ulink url="https://sourceforge.net/p/boot-repair/home/Home/">Boot-Repair</ulink> will repair your Grub 2 boot system. It is useful if the call to <command>grub-install</command> in <link linkend="restore.metadata">restore.metadata</link> fails.</para>
           <listitem>
             <para><ulink url="http://freshmeat.net/projects/mondorescue">Mondo Rescue</ulink> <quote>... creates one or more bootable Rescue CD's (or tape+floppies) containing some or all of your filesystem. In the event of catastrophic data loss, you will be able to restore from bare metal.</quote></para>
           </listitem>

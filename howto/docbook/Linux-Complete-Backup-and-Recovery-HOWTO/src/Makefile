@@ -16,9 +16,11 @@
 	echo ']]>' >> $@
 	cp -rp $@ ../cooked/$*
 
-all: back.up.all.cooked back.up.all.ssh.cooked dev.hda.cooked dev.hda.sfd.cooked first.stage.cooked get.target.cooked get.tester.old.cooked get.tester.cooked install.cooked make.dev.hda.cooked make.fdisk.cooked make.lvs.cooked mount.dev.hda.cooked mount.lvs.cooked restore.all.cooked restore.all.ssh.cooked restore.metadata.cooked restore.tester.old.cooked restore.tester.cooked save.metadata.cooked
+all: back.up.all.cooked back.up.all.ssh.cooked dev.hda.cooked dev.hda.sfd.cooked first.stage.cooked get.target.cooked get.tester.old.cooked get.tester.cooked install.grub.cooked install.cooked make.dev.hda.cooked make.fdisk.cooked make.lvs.cooked mount.dev.hda.cooked mount.lvs.cooked restore.all.cooked restore.all.ssh.cooked restore.metadata.cooked restore.tester.old.cooked restore.tester.cooked save.metadata.cooked
 
 back.up.all.cooked: back.up.all.s
+
+install.grub.cooked: install.grub.s
 
 back.up.all.ssh.cooked: back.up.all.ssh.s
 

@@ -95,16 +95,19 @@ for dir in\
   mkdir -p $target/$dir
 done
 
-for dir in mnt usr usr/share $(ls -d var/*) selinux usr/lib var\
-  var/cache/yum var/lock/subsys var/run var/empty/sshd/etc\
+for dir in mnt usr usr/share $(ls -d var/*) selinux usr/lib var \
+  var/cache/yum var/lock/subsys var/empty/sshd/etc \
   var/spool media ; do
   chmod go-w $target/$dir
 done
 
 # Set modes
 chmod 0111 $target/var/empty/sshd
-chmod 777 $target/var/lock
-chmod o+t $target/var/lock
+# chmod 777 $target/var/lock
+# chmod o+t $target/var/lock
+chmod 777 $target/run/lock
+chmod o+t $target/run/lock
+pushd $target ; ln -s run/lock var/lock ; popd
 chmod 711 $target/var/empty/sshd
 chmod 700 $target/var/lib/bare.metal.recovery
 
@@ -112,15 +115,6 @@ chmod 700 $target/var/lib/bare.metal.recovery
 # chroot $target chown xfs:xfs /tmp/.font-unix
 # chmod 1777 $target/tmp/.font-unix # set the sticky bit.
 chmod 1777 $target/tmp
-
-# Now install the boot sector. N.B: if you have libata IDE drive
-# issues, it won't work. If it doesn't, use your rescue disk to do the
-# same.
-
-BOOTDEV=$(ls /dev/[shv]da)
-
-# chroot $target /sbin/lilo -C /etc/lilo.conf
-chroot $target /sbin/grub-install $BOOTDEV
 
 # Set the system to boot to run level 3 regardless of the current run
 # level. Be sure to set it back to the normal value.

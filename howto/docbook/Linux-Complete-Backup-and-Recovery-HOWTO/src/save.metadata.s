@@ -227,6 +227,8 @@ fi
 # Are we on an RPM based system? Suse?? Other RPM systems?
 REDHAT=$(grep -iq \(fedora\|redhat\) ${zip}/README.txt ; echo $?)
 
+ifconfig > ${zip}/ifconfig
+
 if [ $REDHAT == 0 ] ; then
 
     # back up RPM metadata
@@ -261,20 +263,65 @@ cd /
 # Build our minimal archives on the ZIP disk. These appear to be
 # required so we can restore later on.
 
-crunch usr.lib $(exclude '/usr/lib/perl*') --exclude usr/lib/openoffice\
-  --exclude usr/lib/libreoffice \
-  --exclude usr/lib/Adobe  $(exclude '/usr/lib/python*')\
-  $(exclude '/usr/lib/firefox*') $(exclude '/usr/lib/gimp*') --exclude dri\
-  --exclude X11 $(exclude '/usr/lib/qt*')\
-  --exclude xorg --exclude gconv --exclude locale $(exclude '/usr/lib/evolution*')\
-  --exclude isdn $(exclude '/usr/lib/anaconda*') $(exclude '/usr/lib/ImageMagick*')\
-  --exclude usr/lib/wine usr/lib
+crunch usr.lib \
+$(exclude 'usr/lib/anaconda*') \
+$(exclude 'usr/lib/evolution*') \
+$(exclude 'usr/lib/firefox*') \
+$(exclude 'usr/lib/gimp*') \
+$(exclude 'usr/lib/ImageMagick*') \
+$(exclude 'usr/lib/libgucharmap*' ) \
+$(exclude 'usr/lib/libkdeui*' ) \
+$(exclude 'usr/lib/libmwaw*' ) \
+$(exclude 'usr/lib/llvm*' ) \
+$(exclude 'usr/lib/perl*') \
+$(exclude 'usr/lib/python*') \
+$(exclude 'usr/lib/qt*') \
+$(exclude 'usr/lib/x86_64-linux-gnu/perl*' ) \
+--exclude usr/lib/Adobe \
+--exclude usr/lib/apache2 \
+--exclude usr/lib/calibre \
+--exclude usr/lib/chromium \
+--exclude usr/lib/cups \
+--exclude usr/lib/debug \
+--exclude usr/lib/dri \
+--exclude usr/lib/gcc \
+--exclude usr/lib/gconv \
+--exclude usr/lib/git-core \
+--exclude usr/lib/goffice \
+--exclude usr/lib/googleearth \
+--exclude usr/lib/i386-linux-gnu \
+--exclude usr/lib/isdn \
+--exclude usr/lib/jvm \
+--exclude usr/lib/kde4 \
+--exclude usr/lib/lapack \
+--exclude usr/lib/libreoffice  \
+--exclude usr/lib/libvirt \
+--exclude usr/lib/p7zip \
+--exclude usr/lib/ruby \
+--exclude usr/lib/scons \
+--exclude usr/lib/vlc \
+--exclude usr/lib/wine \
+--exclude usr/lib/X11 \
+--exclude usr/lib/xorg \
+--exclude usr/lib/openoffice \
+usr/lib
 
-# crunch usr.share --exclude icons --exclude selinux\
-#  --exclude man --exclude doc --exclude locale --exclude X11\
-#  --exclude fonts --exclude gnome --exclude foomatic\
-#  --exclude gnome-applets --exclude man --exclude pixmaps usr/share
-# crunch usr.share.locale /usr/share/locale/en_US/
+# locale
+
+crunch usr.share \
+$(exclude 'fonts*') \
+--exclude doc \
+--exclude foomatic \
+--exclude gnome \
+--exclude gnome-applets \
+--exclude icons \
+--exclude man \
+--exclude pixmaps \
+--exclude selinux \
+--exclude X11 \
+usr/share
+
+# crunch usr.share.locale.en_US usr/share/locale/en_US/
 
 # if [ -e /usr/share/fonts/default ]\
 #   && [ -e /usr/share/fonts/ISO8859-2 ]\
@@ -285,7 +332,8 @@ crunch usr.lib $(exclude '/usr/lib/perl*') --exclude usr/lib/openoffice\
 
 crunch root --exclude root/tmp --exclude root/.cpan --exclude root/.mozilla --exclude root/down root
 crunch boot boot
-crunch etc --exclude etc/samba --exclude etc/X11 --exclude etc/gconf etc
+crunch etc --exclude etc/samba --exclude etc/gconf etc #  --exclude etc/X11
+crunch lib64 lib64
 crunch lib lib
 
 crunch usr.sbin usr/sbin
@@ -296,19 +344,32 @@ if [ $REDHAT == 0 ] ; then
   crunch usr.kerberos usr/kerberos
 fi
 
-crunch usr.bin --exclude usr/bin/emacs-x\
- --exclude usr/bin/emacsclient --exclude usr/bin/emacs-nox --exclude\
-  usr/bin/gs --exclude usr/bin/pine $(exclude 'usr/bin/gimp-*')\
-   --exclude usr/bin/doxygen --exclude usr/bin/postgres --exclude\
-    usr/bin/gdb --exclude usr/bin/kmail --exclude usr/bin/splint\
-	 --exclude usr/bin/odbctest --exclude usr/bin/php --exclude \
-	 usr/bin/xchat --exclude usr/bin/gnucash --exclude usr/bin/pdfetex\
-	  --exclude usr/bin/pdftex --exclude usr/bin/smbcacls\
-	   --exclude usr/bin/evolution-calendar --exclude usr/bin/xpdf\
-	    --exclude usr/bin/xmms usr/bin
+crunch usr.bin --exclude usr/bin/emacs-x \
+--exclude usr/bin/emacsclient --exclude usr/bin/emacs-nox --exclude \
+usr/bin/gs --exclude usr/bin/pine $(exclude 'usr/bin/gimp-*') \
+--exclude usr/bin/doxygen --exclude usr/bin/postgres --exclude \
+usr/bin/gdb --exclude usr/bin/kmail --exclude usr/bin/splint \
+--exclude usr/bin/odbctest --exclude usr/bin/php --exclude \
+usr/bin/xchat --exclude usr/bin/gnucash --exclude usr/bin/pdfetex \
+--exclude usr/bin/pdftex --exclude usr/bin/smbcacls \
+--exclude usr/bin/evolution-calendar --exclude usr/bin/xpdf \
+--exclude usr/bin/xmms usr/bin
+
 crunch sbin sbin
 crunch bin bin
 crunch dev dev
+crunch run run
+
+# Debian amanda clients will want these in order to run amrecover:
+crunch var.backup var/backups
+crunch var.log.amanda var/log/amanda
+crunch var.lib.amanda var/lib/amanda
+# How well will this work if you don't run this script after every
+# backup? I suspect these will get out of synch with the amanda
+# backups.
+
+# End amanda on Debian
+
 
 # RH8. Fedora 1 puts them in /lib
 # crunch kerberos usr/kerberos/lib/

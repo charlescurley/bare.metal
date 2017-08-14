@@ -53,6 +53,8 @@
 
 # Changes:
 
+# 2017-07-29: Lots of small changes after testing on Debian 9.
+
 # 2017-07-17: A new format string for more modern versions of
 # fdisk. Using split instead of unpack for the output of fdisk. The
 # first go at preserving LUKS partitions. Lots of other changes due to
@@ -312,7 +314,7 @@ sub getswaplabel {
     open (FSTAB, "< /etc/fstab")
         or die "Couldn't fork: $!\n";
     while (defined (my $line = <FSTAB>)) {
-        chop ($line);
+        chomp ($line);
         @fstabs = split (" ", $line);
         if (@fstabs[1] eq "swap") {
             $swaplabel = @fstabs[0];
@@ -326,7 +328,7 @@ sub getswaplabel {
     }
     close (FSTAB);
 
-#   print "label is $sl.\n";
+    # print ("label is $sl.\n");
 
     if ($swaps == 1) {
         $ret = "-L $sl $dev\n";
@@ -354,7 +356,7 @@ sub doluks {
         die ("LUKS backup of $device failed!\n\n");
     }
     $format .= "echo Device $device is a LUKS partition.\n";
-    $format .= "cryptsetup luksHeaderRestore $device --header-backup-file $devName-header-backup\n";
+    $format .= "cryptsetup luksHeaderRestore $device --header-backup-file ../metadata/$devName-header-backup\n";
     $format .= "cryptsetup isLuks $device\n";
     $format .= "if [ \"\$?\" != '0'  ] ; then\n";
     $format .= "    echo Error: $device is NOT a LUKS partition.\n";
@@ -363,6 +365,8 @@ sub doluks {
     $format .= "echo Opening $device as a LUKS partition.\n";
     $format .= "cryptsetup luksOpen $device $cryptName\n";
     $format .= "ls /dev/mapper\n";
+
+    print ("\n\nWarning!! $device is a LUKS partition. Be sure you have the passphrase for restoration!!!\n\n");
 
     dolvm ();
 }
@@ -428,7 +432,7 @@ FINIS
         $pvdisp = open (PVDISP, "pvdisplay -c |")
             or die ("Can't open LVM display.\n");
         while (defined (my $pv = <PVDISP>)) {
-            chop ($pv);
+            chomp ($pv);
 #             print ("$pv\n");
             @pv = split (":", $pv);
             $uid = @pv[11];
@@ -441,7 +445,6 @@ FINIS
                 die ("Failed to back up $pvname!!\n");
             }
 
-            print (MKLVS "echo Do we really need to do this pvcreate???\n");
             print (MKLVS "echo \"y\\n\" | pvcreate -ff --uuid \"$uid\"\\\n");
             print (MKLVS "    --restorefile ../metadata/lvm/backup/${pvname} $phv\n");
             print (MKLVS "vgcfgrestore --file ../metadata/LVM.backs.$pvname $pvname\n\n");
@@ -452,6 +455,14 @@ FINIS
         print (MKLVS "    /etc/init.d/lvm start\nfi\n\n");
         print (MKLVS "if [ -e /etc/init.d/lvm2 ] ; then\n");
         print (MKLVS "    /etc/init.d/lvm2 start\nfi\n\n");
+
+        # Now tell the volume manager software to find the new volume:
+
+        print (MKLVS "# scan for new volume groups\n");
+        print (MKLVS "vgscan --mknodes\n\n");
+        print (MKLVS "# Activate the volume groups\n");
+        print (MKLVS "vgchange -ay\n\n");
+        print (MKLVS "ls /dev/mapper\n\n");
 
         # Now walk fstab in search of logical volumes. This is
         # necessary to pick up swap partitions, and it may pick up
@@ -535,7 +546,7 @@ FINIS
                 }
                 @vsorted = sort (@vnames);
                 foreach $vname (@vsorted) {
-#                     print "/dev/$fname/$vname: " . $volsfound{"/dev/$fname/$vname"} . "\n";
+                    # print ("/dev/$fname/$vname: " . $volsfound{"/dev/$fname/$vname"} . "\n");
                     if($vname ne "." && $vname ne ".."
                        && $volsfound{"/dev/$fname/$vname"} < 1) {
 #                         print ("Inside /dev/$fname is $vname.\n");
@@ -614,6 +625,7 @@ FINIS
                 closedir (VOLHANDLE);
             }
         }
+        print (MKLVS "ls /dev/mapper\n");
         print (MTLVS "mount | grep -i \"/target\"\n");
 
         closedir (DEVHANDLE);
@@ -643,7 +655,7 @@ sub getuuid {
     my $rs = open (UUID, "blkid -o value -s UUID $device |")
         or die ("Can't open volume id tool.\n");
     while (defined (my $uuid = <UUID>)) {
-        chop ($uuid);
+        chomp ($uuid);
         # print ("$uuid\n");
 
         if (UUID::parse($uuid, my $rawUuid) != -1) {
@@ -671,10 +683,11 @@ sub getextopts {
 
       if (/Filesystem features/) {
         $_ = substr ($_, 26);
-        chop ();
-        $_ =~ s/needs_recovery //g;
-        $_ =~ s/ /,/g;
-        # print ("Features are: ${_}.\n");
+        chomp ();
+        $_ =~ s/needs_recovery//g;
+        $_ =~ s/metadata_csum//g;
+        $_ = join (',', split (" "));
+        print ("File system features of $device are: |${_}|.\n");
         return ($_ = ' -O ' . $_ . ' ');
       }
     }
@@ -685,6 +698,9 @@ sub getextopts {
 }
 
 # Begin main line code.
+
+# The last cylinder we find. Used to zero out the drive for testing.
+$lastKnownCylinder = 0;
 
 # $outputfilepath = "/root/bin/";
 $outputfilepath = $ENV{"zip"} . "/";
@@ -742,12 +758,15 @@ if ( -l $device) {
 
 $fdpid = open (FDVER, "fdisk -v |") or die "Couldn't fork: $!\n";
 while (<FDVER>) {
-    @_ = unpack ("A7 A*", $_);
-    $fdver=$_[1];
-    $fdver =~ s/[^\d.]//g; # strip non-numbers, non-periods, as in "2.12pre".
+    chomp;
+    # print ("$_\n");
+    # print "fdisk version is |$_|\n";
+    $_ =~ s/[^\d.]//g; # strip non-numbers, non-periods, as in "2.12pre".
+    $_ =~ m/(\d+\.\d+)/;
+    $fdver = $1;
 }
 
-# print "fdisk version is $fdver\n";
+# print "fdisk version is |$fdver|\n";
 
 if ($fdver < 2.12) {
 # fdisk to 2.11?? Red Hat, Fedora Core 1
@@ -762,7 +781,7 @@ if ($fdver < 2.12) {
 $dev = 0;
 $bootable = 1;
 $firstcyl = 1;
-$lastcyl = 3;
+$endcyl = 2;
 $parttype = 5;
 $partstring = 6;
 
@@ -776,7 +795,7 @@ $outputfilename = substr ($outputfilename, 1, 100);
 $mpid = open (MOUNT, "mount -l |") or die "Couldn't fork: $!\n";
 while (<MOUNT>) {
     if ($_ =~ /^$mountdev/i) {  # is this a line with a partition in it?
-        chop;
+        chomp;
         # print "mount line is \"$_\"\n"; # print it just for grins
         @_ = split;
         if ($_[6] ne "") {     # only process if there actually is a label
@@ -840,9 +859,9 @@ while (<FDISK>) {
         $bootFlag = 0;
 
         # print $_;               # print it just for grins
-        chop;                       # kill trailing \r
+        chomp;                       # kill trailing \r
 
-        if ($fdver > 2.25) {
+        if ($fdver > 2.24) {
             # Unfortunately, split does not get rid of the bootable
             # flag asterisk for us.
             @_ = split;
@@ -863,14 +882,14 @@ while (<FDISK>) {
         # Now strip white spaces from cylinder numbers, white space &
         # leading plus signs from partition type.
         @_[$firstcyl] =~ s/[ \t]+//;
-        @_[$lastcyl] =~ s/[ \t]+//;
+        @_[$endcyl] =~ s/[ \t]+//;
         @_[$partstring] =~ s/[ \t]+//;
         @_[$parttype] =~ s/[+ \t]+//;
 
         $partnumber = substr(@_[$dev], 8, 10); # get partition number for this line
 
         # just for grins
-        # print "Partition: |$partnumber|, |@_[$firstcyl]|, |@_[$lastcyl]|,";
+        # print "Partition: |$partnumber|, |@_[$firstcyl]|, |@_[$endcyl]|,";
         # print " Type: |@_[$parttype]|, String: |@_[$partstring]|\n";
 
         # foreach $el (@_) {
@@ -886,8 +905,8 @@ while (<FDISK>) {
             if (@_[$parttype] == 83) {
                 print OUTPUT "p\n$partnumber\n@_[$firstcyl]\n";
                 # in case it's all on one cylinder
-                if (@_[$firstcyl] ne @_[$lastcyl]) {
-                    print OUTPUT "@_[$lastcyl]\n";
+                if (@_[$firstcyl] ne @_[$endcyl]) {
+                    print OUTPUT "@_[$endcyl]\n";
                 }
 
                 if (system ("cryptsetup isLuks @_[$dev]") == 0) {
@@ -918,24 +937,24 @@ while (<FDISK>) {
             } elsif (@_[$parttype] == 5) {
                 # print ("Creating Extended Partition.\n");
                 print OUTPUT "e\n$partnumber\n@_[$firstcyl]\n";
-                if (@_[$firstcyl] ne @_[$lastcyl]) {
-                    print OUTPUT "@_[$lastcyl]\n";
+                if (@_[$firstcyl] ne @_[$endcyl]) {
+                    print OUTPUT "@_[$endcyl]\n";
                 }
 
                 # extended partition, Win95 Ext'd (LBA)
             } elsif (@_[$parttype] eq "f") {
                 # print ("Creating Extended LBA Partition.\n");
                 print OUTPUT "e\n$partnumber\n@_[$firstcyl]\n";
-                if (@_[$firstcyl] ne @_[$lastcyl]) {
-                    print OUTPUT "@_[$lastcyl]\n";
+                if (@_[$firstcyl] ne @_[$endcyl]) {
+                    print OUTPUT "@_[$endcyl]\n";
                 }
                 $typechanges .= "t\n$partnumber\nf\n";
 
                 # primary Linux swap partition
             } elsif (@_[$parttype] == 82) {
                 print OUTPUT "p\n$partnumber\n@_[$firstcyl]\n";
-                if (@_[$firstcyl] ne @_[$lastcyl]) {
-                    print OUTPUT "@_[$lastcyl]\n";
+                if (@_[$firstcyl] ne @_[$endcyl]) {
+                    print OUTPUT "@_[$endcyl]\n";
                 }
                 $typechanges .= "t\n$partnumber\n82\n";
                 $format .= "echo\necho Making @_[$dev] a swap partition.\n";
@@ -965,8 +984,8 @@ while (<FDISK>) {
 
                 print OUTPUT "p\n$partnumber\n@_[$firstcyl]\n";
                 # in case it's all on one cylinder
-                if (@_[$firstcyl] ne @_[$lastcyl]) {
-                    print OUTPUT "@_[$lastcyl]\n";
+                if (@_[$firstcyl] ne @_[$endcyl]) {
+                    print OUTPUT "@_[$endcyl]\n";
                 }
 
                 $typechanges .= "t\n$partnumber\n@_[$parttype]\n";
@@ -987,8 +1006,8 @@ while (<FDISK>) {
             } else {
                 # anything else partition
                 print OUTPUT "p\n@_[$firstcyl]\n";
-                if (@_[$firstcyl] ne @_[$lastcyl]) {
-                    print OUTPUT "@_[$lastcyl]\n";
+                if (@_[$firstcyl] ne @_[$endcyl]) {
+                    print OUTPUT "@_[$endcyl]\n";
                 }
                 $typechanges .= "t\n$partnumber\n@_[$parttype]\n";
             }
@@ -997,8 +1016,8 @@ while (<FDISK>) {
             # logical Linux partition
             if (@_[$parttype] == 83) {
                 print OUTPUT "l\n@_[$firstcyl]\n";
-                if (@_[$firstcyl] ne @_[$lastcyl]) {
-                    print OUTPUT "@_[$lastcyl]\n";
+                if (@_[$firstcyl] ne @_[$endcyl]) {
+                    print OUTPUT "@_[$endcyl]\n";
                 }
 
                 if (system ("cryptsetup isLuks @_[$dev]") == 0) {
@@ -1027,8 +1046,8 @@ while (<FDISK>) {
                 # logical Linux swap partition
             } elsif (@_[$parttype] == 82 ) {
                 print OUTPUT "l\n@_[$firstcyl]\n";
-                if (@_[$firstcyl] ne @_[$lastcyl]) {
-                    print OUTPUT "@_[$lastcyl]\n";
+                if (@_[$firstcyl] ne @_[$endcyl]) {
+                    print OUTPUT "@_[$endcyl]\n";
                 }
                 $typechanges .= "t\n$partnumber\n82\n";
                 $format .= "echo\necho Making @_[$dev] a swap partition.\n";
@@ -1058,8 +1077,8 @@ while (<FDISK>) {
 
                 print OUTPUT "l\n$partnumber\n@_[$firstcyl]\n";
                 # in case it's all on one cylinder
-                if (@_[$firstcyl] ne @_[$lastcyl]) {
-                    print OUTPUT "@_[$lastcyl]\n";
+                if (@_[$firstcyl] ne @_[$endcyl]) {
+                    print OUTPUT "@_[$endcyl]\n";
                 }
                 $typechanges .= "t\n$partnumber\n@_[$parttype]\n";
                 $format .= "echo\necho formatting $checking@_[$dev]\n";
@@ -1079,8 +1098,8 @@ while (<FDISK>) {
             } else {
                 # anything else partition
                 print OUTPUT "l\n@_[$firstcyl]\n";
-                if (@_[$firstcyl] ne @_[$lastcyl]) {
-                    print OUTPUT "@_[$lastcyl]\n";
+                if (@_[$firstcyl] ne @_[$endcyl]) {
+                    print OUTPUT "@_[$endcyl]\n";
                 }
                 $typechanges .= "t\n$partnumber\n@_[$parttype]\n";
             }
@@ -1089,7 +1108,7 @@ while (<FDISK>) {
         # handle bootable partitions
         if ($bootFlag) {
             print OUTPUT "a\n$partnumber\n";
-            print ("Partition $device is bootable.\n");
+            print ("Partition $_[$dev] is bootable.\n");
         }
     } else {
         # If we got here, the current line does not have a partition in it.
@@ -1100,7 +1119,7 @@ while (<FDISK>) {
 
         if ($_ =~ /heads.*sectors.*cylinders/i) {
 #           print $_;               # again, for grins.
-            chop;
+            chomp;
             @geometry = split (/ /, $_);
             $geometry = "-H $geometry[0] -S $geometry[2] -C $geometry[4]";
 #           print $geometry;
@@ -1157,7 +1176,8 @@ FINIS
 # it.
 
 # print OUTPUT "dd if=/dev/zero of=$device bs=512 count=2\n\nsync\n\n";
-print OUTPUT "dd if=/dev/zero of=$device bs=1024 count=2000\n\nsync\n\n";
+print OUTPUT "echo Zeroing out the hard drive. This may take a while.\n";
+print OUTPUT "dd if=/dev/zero of=$device bs=10240 count=2000000\n\nsync\n\n";
 
 
 # command for fdisk

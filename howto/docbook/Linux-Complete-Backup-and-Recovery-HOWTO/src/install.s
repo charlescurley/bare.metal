@@ -67,7 +67,7 @@ done
 # Save the recovery time executables we provide. The archiving
 # programs look for them here and save them into the archives.
 mkdir -p /etc/bare.metal.recovery
-for i in first.stage restore.metadata ; do
+for i in first.stage restore.metadata install.grub ; do
   cp -rp $i /etc/bare.metal.recovery
   chown root:root /etc/bare.metal.recovery/$i
 done

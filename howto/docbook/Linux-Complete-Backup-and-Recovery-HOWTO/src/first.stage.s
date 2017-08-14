@@ -79,5 +79,8 @@ done
 
 ./restore.metadata
 
+echo Installing grub now.
+./install.grub
+
 # People who are really confident may comment this line in.
 # reboot
