@@ -333,7 +333,9 @@ usr/share
 crunch root --exclude root/tmp --exclude root/.cpan --exclude root/.mozilla --exclude root/down root
 crunch boot boot
 crunch etc --exclude etc/samba --exclude etc/gconf etc #  --exclude etc/X11
-crunch lib64 lib64
+if [ -e lib64 ] ; then
+    crunch lib64 lib64
+fi
 crunch lib lib
 
 crunch usr.sbin usr/sbin
