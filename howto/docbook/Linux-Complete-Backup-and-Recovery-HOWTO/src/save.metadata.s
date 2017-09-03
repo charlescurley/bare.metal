@@ -238,6 +238,8 @@ if [ $REDHAT == 0 ] ; then
 
 else
     echo "Non-RPM System."
+    apt-get clean
+    apt-get autoremove
     dpkg-query --showformat='${Package}\t${Version}\t${Revision}\t${Architecture}\n' --show | sort > ${zip}/packages.txt
     if [ -z $(which debsums) ] ; then
         echo debsums is *not* intalled.
