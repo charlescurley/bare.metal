@@ -123,7 +123,7 @@ else
    local dirs=$@		# The director[y|ies] to archive
    local tarcmd="tar --numeric-owner -cjf"	# The tar command.
 
-   local tarit="$tarcmd  ${zip}/$data/$file.tar.bz2 $dirs"
+   local tarit="$tarcmd  ${zip}/${data}/$file.tar.bz2 $dirs"
    echo $tarit
    $tarit			# do it!!
 
@@ -132,7 +132,7 @@ else
    if [ $error != 0 ]		# Did we fail?
    then				# Yes
       echo "Tar failed with error $error"
-      echo $tarcmd ${zip}/$data/$file.tar.bz2 $dirs
+      echo $tarcmd ${zip}/${data}/$file.tar.bz2 $dirs
       exit $error		# return tar's exit code as ours
    fi
 
@@ -142,8 +142,9 @@ fi
 
 # Begin the main line code
 export data="data";             # Name of the data directory in the archive
-export today=$(date +%Y%m%d);   # Today's archive
-export zip="/var/lib/bare.metal.recovery/${today}";
+export today=$(date +%Y%m%d);   # Today's date
+export zips="/var/lib/bare.metal.recovery"
+export zip="${zips}/${HOSTNAME}.${today}";  # Today's archive
 
 if [ -d ${zip} ] ; then
   echo deleting metadata from earlier today,
@@ -151,7 +152,7 @@ if [ -d ${zip} ] ; then
   echo
   rm -r ${zip}
 fi
-mkdir -p ${zip}/metadata ${zip}/bin ${zip}/data
+mkdir -p ${zip}/metadata ${zip}/bin ${zip}/${data}
 
 NEW=${zip}/metadata/rpmVa.txt       # name for the rpm -Va output file.
 
@@ -239,7 +240,7 @@ if [ $REDHAT == 0 ] ; then
 else
     echo "Non-RPM System."
     apt-get clean
-    apt-get --yes autoremove
+    # apt-get --yes autoremove
     dpkg-query --showformat='${Package}\t${Version}\t${Revision}\t${Architecture}\n' --show | sort > ${zip}/packages.txt
     if [ -z $(which debsums) ] ; then
         echo debsums is *not* intalled.
