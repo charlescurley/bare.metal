@@ -71,3 +71,6 @@ ssh $host "cd / ; tar -cf - --anchored --exclude media --exclude mnt\
 
 echo Testing the results.
 find $host.$DATE* -iname "*.bz2" | xargs bunzip2 -t
+
+# Post-processing.
+. ../scripts/post.sh

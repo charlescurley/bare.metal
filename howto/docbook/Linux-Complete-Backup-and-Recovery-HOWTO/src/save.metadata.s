@@ -239,7 +239,7 @@ if [ $REDHAT == 0 ] ; then
 
 else
     echo "Non-RPM System."
-    apt-get clean
+    # apt-get clean
     # apt-get --yes autoremove
     dpkg-query --showformat='${Package}\t${Version}\t${Revision}\t${Architecture}\n' --show | sort > ${zip}/packages.txt
     if [ -z $(which debsums) ] ; then
@@ -273,7 +273,9 @@ $(exclude 'usr/lib/firefox*') \
 $(exclude 'usr/lib/gimp*') \
 $(exclude 'usr/lib/ImageMagick*') \
 $(exclude 'usr/lib/libgucharmap*' ) \
+$(exclude 'usr/lib/libkatepartinterfaces*') \
 $(exclude 'usr/lib/libkdeui*' ) \
+$(exclude 'usr/lib/libkhtml*') \
 $(exclude 'usr/lib/libmwaw*' ) \
 $(exclude 'usr/lib/llvm*' ) \
 $(exclude 'usr/lib/perl*') \
@@ -299,6 +301,7 @@ $(exclude 'usr/lib/x86_64-linux-gnu/perl*' ) \
 --exclude usr/lib/lapack \
 --exclude usr/lib/libreoffice  \
 --exclude usr/lib/libvirt \
+--exclude usr/lib/openoffice \
 --exclude usr/lib/p7zip \
 --exclude usr/lib/ruby \
 --exclude usr/lib/scons \
@@ -306,13 +309,13 @@ $(exclude 'usr/lib/x86_64-linux-gnu/perl*' ) \
 --exclude usr/lib/wine \
 --exclude usr/lib/X11 \
 --exclude usr/lib/xorg \
---exclude usr/lib/openoffice \
 usr/lib
 
 # locale
 
 crunch usr.share \
 $(exclude 'fonts*') \
+--exclude AAVMF \
 --exclude doc \
 --exclude foomatic \
 --exclude gnome \
@@ -321,6 +324,7 @@ $(exclude 'fonts*') \
 --exclude man \
 --exclude pixmaps \
 --exclude selinux \
+--exclude texlive \
 --exclude X11 \
 usr/share
 
@@ -431,6 +435,12 @@ fi
 # interface type to or from your system!
 
 find ${zip} -type f | grep -v bz2$ | xargs sed -i 's|/dev/sda|/dev/hda|g'
+
+echo "Making checksums so we can verify..."
+pushd ${zips}
+find ${HOSTNAME}.${today} -type f | sort | xargs sha512sum >  ${zip}.sha512sums
+find ${HOSTNAME}.${today} -type f | sort | xargs sha256sum >  ${zip}.sha256sums
+popd
 
 du -hs ${zip}
 df -h

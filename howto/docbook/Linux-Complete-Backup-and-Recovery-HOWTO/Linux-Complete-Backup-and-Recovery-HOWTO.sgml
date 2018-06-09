@@ -15,6 +15,7 @@
 <!ENTITY back.up.all.ssh SYSTEM "cooked/back.up.all.ssh">
 <!ENTITY restore.all SYSTEM "cooked/restore.all">
 <!ENTITY restore.all.ssh SYSTEM "cooked/restore.all.ssh">
+<!ENTITY post.sh SYSTEM "cooked/post.sh">
 <!ENTITY get.tester SYSTEM "cooked/get.tester">
 <!ENTITY get.target SYSTEM "cooked/get.target">
 <!ENTITY restore.tester SYSTEM "cooked/restore.tester">
@@ -72,6 +73,12 @@ Change notes:
 
       <!-- Additional revision history entries go here -->
       <!-- Can we automate this? C^2 -->
+      <revision>
+        <revnumber>2.12</revnumber>
+        <date>2018-06-09</date>
+        <authorinitials>c^2</authorinitials>
+        <revremark>Added checksum generation and testing to improve reliability.</revremark>
+      </revision>
       <revision>
         <revnumber>2.11</revnumber>
         <date>2017-07-29</date>
@@ -476,6 +483,7 @@ Change notes:
       <para>The files in the archive directory include a <filename>README.txt</filename>, which has information about the backup and the computer the backup was made on. Other files are there in case hand intervention is required.</para>
       <para>Below the daily archive directory are several text files and three directories. The scripts reside in <filename>bin</filename>, the tarballs in <filename>data</filename>, and information about the system such as partitions and LVM volume backups are in <filename>metadata</filename>.</para>
       <para>To create a CD, simply use a script or graphical tool to create a CD starting at the daily archive directory. It is up to you to be sure your archive will fit onto your medium, or to make other arrangements.</para>
+      <para>Also in the archive are checksum files for each daily archive. Use those to check the integrity of the daily archives. This is useful for checking archives when you copy them to other computers (such as a backup server) or to the target prior to resoration. If you launch the bare metal backup from the backup server using <link linkend="get"><filename>get</filename></link>, that script will copy the checksum files to the server, and check the archive copy on the server.</para>
     </sect2>
     <sect2 id="ThemeAndVariations">
       <title>Theme And Variations</title>
@@ -928,26 +936,32 @@ tar cf - usr/knox | gzip -c > $zip/arkeia.tar.gz]]></programlisting>
     <sect2 id="BackupServerScripts">
       <title>Backup Server Scripts</title>
       <para>The SSH scripts above have a possible security problem. If you run them on a firewall, the firewall has to have access via SSH to the backup server. In that case, a clever cracker might also be able to crack the backup server. It would be more secure to run backup and restore scripts on the backup server, and let the backup server have access to the firewall. That is what these scripts are for.</para>
-      <para>These scripts backup and restore the target completely, not just the stage one backup and restore. <filename>get</filename> backs up the bare metal archive separately so that you can make a CD-ROM or NFS mount from it.</para>
+      <para>These scripts back up and restore the target completely, not just the stage one backup and restore. <filename>get</filename> backs up the bare metal archive separately so that you can make a CD-ROM or NFS mount from it.</para>
       <para>I use these scripts routinely.</para>
       <sect3 id="get">
         <title><filename>get</filename></title>
         <programlisting>&get.tester;</programlisting>
       </sect3>
-      <sect3 id="restore">
-        <title><filename>restore</filename></title>
-        <programlisting>&restore.tester;</programlisting>
+      <sect3 id="post.sh">
+        <title><filename>post.sh</filename></title>
+        <para>This is called at the end of scripts to get target backups, such as <link linkend="get"><filename>get</filename></link>. It does some post-processing to be sure we have transferred the data from the target to the server correctly.</para>
+        <para>Note that it expects and tests copies of the checksums made on the target. It also creates new checksum files, which include the archive tarball which <link linkend="get"><filename>get</filename></link> creates.</para>
+        <programlisting>&post.sh;</programlisting>
       </sect3>
       <sect3 id="get.target">
         <title><filename>get.target</filename></title>
         <programlisting>&get.target;</programlisting>
+      </sect3>
+      <sect3 id="restore">
+        <title><filename>restore</filename></title>
+        <programlisting>&restore.tester;</programlisting>
       </sect3>
     </sect2>
     <sect2 id="misc.files">
       <title>Miscellaneous Files</title>
       <sect3 id="install">
         <title><filename>install</filename></title>
-        <para>This little script just installs things and sets up a few directories. It tests for the presence of the perl UUID module.</para>
+        <para>This little script just installs things on target systems and sets up a few directories. It tests for the presence of the perl UUID module.</para>
         <para>It would be a useful basis for an RPM or deb package. The placement of files is based on the <emphasis><ulink url="http://www.pathname.com/fhs/">Filesystem Hierarchy Standard</ulink></emphasis>, version 2.3, announced on January 29, 2004.</para>
         <programlisting>&install;</programlisting>
       </sect3>
