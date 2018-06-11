@@ -687,7 +687,7 @@ sub getextopts {
         $_ =~ s/needs_recovery//g;
         $_ =~ s/metadata_csum//g;
         $_ = join (',', split (" "));
-        print ("File system features of $device are: |${_}|.\n");
+        # print ("File system features of $device are: |${_}|.\n");
         return ($_ = ' -O ' . $_ . ' ');
       }
     }
