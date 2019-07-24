@@ -166,6 +166,12 @@ ship: all dist
 # 	createrepo -q $(SERVER)/rpms
 
 	cd $(SERVER) ; sha256sum *.bz2 > sha256sums ; sha1sum *.bz2 > sha1sums
+	cd $(SERVER) ; ln -s $(DOCUMENT)-$(VERSION).tar.bz2 $(DOCUMENT)-latest.tar.bz2
+	cd $(SERVER) ; ln -s $(DOCUMENT)-$(VERSION).txt.bz2 $(DOCUMENT)-latest.txt.bz2
+	cd $(SERVER) ; ln -s $(DOCUMENT)-$(VERSION).smooth.html.tar.bz2 $(DOCUMENT)-latest.smooth.html.tar.bz2
+	cd $(SERVER) ; ln -s $(DOCUMENT)-$(VERSION).ps.bz2 $(DOCUMENT)-latest.ps.bz2
+	cd $(SERVER) ; ln -s $(DOCUMENT)-$(VERSION).pdf.bz2 $(DOCUMENT)-latest.pdf.bz2
+	cd $(SERVER) ; ln -s $(DOCUMENT)-$(VERSION).chunky.html.tar.bz2 $(DOCUMENT)-latest.chunky.html.tar.bz2
 	ls -l $(SERVER)
 
 install:
