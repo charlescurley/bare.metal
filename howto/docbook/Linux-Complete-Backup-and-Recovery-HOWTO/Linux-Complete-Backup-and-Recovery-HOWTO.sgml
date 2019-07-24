@@ -75,7 +75,7 @@ Change notes:
         <revnumber>2.13</revnumber>
         <date>2019-07-24</date>
         <authorinitials>c^2</authorinitials>
-        <revremark>save.metadata no longer chages all /dev/sda device names to /dev/hda names. Major changes in the README.</revremark>
+        <revremark>save.metadata no longer changes all /dev/sda device names to /dev/hda names. Major changes in the README.</revremark>
       </revision>
       <revision>
         <revnumber>2.12</revnumber>
