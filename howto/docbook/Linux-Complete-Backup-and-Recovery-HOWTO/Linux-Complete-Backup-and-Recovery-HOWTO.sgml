@@ -21,10 +21,8 @@
 <!ENTITY restore.tester SYSTEM "cooked/restore.tester">
 <!ENTITY first.stage SYSTEM "cooked/first.stage">
 
-<!ENTITY longversion "$Header: /cvsroot/LDP/howto/docbook/Linux-Complete-Backup-and-Recovery-HOWTO/Linux-Complete-Backup-and-Recovery-HOWTO.sgml,v 1.29 2007/07/08 18:05:45 ccurley Exp $">
-
 <!ENTITY myemail "charlescurley at charlescurley dot com">
-<!ENTITY myurl "http://charlescurley.com">
+<!ENTITY myurl "https://charlescurley.com">
 
 <!ENTITY % review "IGNORE">
 
