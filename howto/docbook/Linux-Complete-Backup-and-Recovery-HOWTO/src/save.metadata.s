@@ -422,19 +422,22 @@ if [ $REDHAT == 0 ] ; then
   mkbootdisk --iso --device ${zip}/bootdisk.$(uname -r).iso $(uname -r)
 fi
 
-# Recent kernels have incorporated a new ATA (IDE) hard drive
-# driver. Because of this, parallel ATA drives now show up as SCSI
+# 2007ish kernels incorporated a new ATA (IDE) hard drive
+# driver. Because of this, parallel ATA (PATA) drives show up as SCSI
 # drives, as serial ATA have always done. However, not all rescue
-# distributions (e.g. finix) use this new driver. So the following
+# distributions (e.g. finnix) use this new driver. So the following
 # line very carefully replaces "/dev/sda" with "/dev/hda". Use this as
-# a template if you have multiple IDE hard drives.
+# a template if you have multiple IDE hard drives. Newer versions of
+# finnix have PATA drives show up as SCSI drives (sd), so we have
+# commented it out. It is commented out so you can comment it in if
+# you need it.
 
 # Note that there is no guaranteed mapping! Systems with multiple hard
 # drives may have confusing mappings. Be sure to edit this line
 # carefully. Check it if you add or remove a hard drive of any
 # interface type to or from your system!
 
-find ${zip} -type f | grep -v bz2$ | xargs sed -i 's|/dev/sda|/dev/hda|g'
+# find ${zip} -type f | grep -v bz2$ | xargs sed -i 's|/dev/sda|/dev/hda|g'
 
 echo "Making checksums so we can verify..."
 pushd ${zips}
