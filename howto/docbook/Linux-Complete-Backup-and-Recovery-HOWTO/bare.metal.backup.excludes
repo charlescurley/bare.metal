@@ -1,7 +1,7 @@
 afs
 back
 boot
-crc
+crc*
 etc
 home/.ecryptfs
 home/back.in.time
