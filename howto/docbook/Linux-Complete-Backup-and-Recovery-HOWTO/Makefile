@@ -28,7 +28,7 @@ dslhtml = -d $(ldpdslpath)/ldp.dsl\\\#html
 dslprint = -d $(ldpdslpath)/ldp.dsl\\\#print
 
 # All the scripts we depend on....
-SCRIPTS := $(shell ls src/*)
+SCRIPTS := $(shell ls src/*.s)
 
 cooked:
 	-mkdir cooked scripts $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
