@@ -122,11 +122,13 @@ else
    shift			# Discard the file name
    local dirs=$@		# The director[y|ies] to archive
 
-   # shall we use multi-processor compression?
-   if [ -x /usr/bin/pbzip2 ] ; then
-       local tarcmd="tar --numeric-owner -I /usr/bin/pbzip2 -cf"	# The tar command.
-   else
+   # shall we use multi-processor compression? Assuming it's in our
+   # $PATH.
+   zipper=$(which pbzip2)
+   if [ -z "${zipper}" ] ; then
        local tarcmd="tar --numeric-owner -cjf"	# The tar command.
+   else
+       local tarcmd="tar --numeric-owner -I ${zipper} -cf"	# The tar command.
    fi
 
    local tarit="$tarcmd  ${zip}/${data}/$file.tar.bz2 $dirs"
