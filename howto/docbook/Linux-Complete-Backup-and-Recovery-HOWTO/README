@@ -40,9 +40,9 @@ the directory `scripts`.
 
 Debian packages you may want, among others:
 
-``
+```
 apt install make jade jadetex docbook ldp-docbook-dsssl lynx
-``
+```
 
 This directory has the SGML source and related files for the Linux
 Complete Backup and Recovery HOWTO. It should have everything you need
