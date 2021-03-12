@@ -121,7 +121,13 @@ else
    local file=$1		# The archive file to create
    shift			# Discard the file name
    local dirs=$@		# The director[y|ies] to archive
-   local tarcmd="tar --numeric-owner -cjf"	# The tar command.
+
+   # shall we use multi-processor compression?
+   if [ -x /usr/bin/pbzip2 ] ; then
+       local tarcmd="tar --numeric-owner -I /usr/bin/pbzip2 -cf"	# The tar command.
+   else
+       local tarcmd="tar --numeric-owner -cjf"	# The tar command.
+   fi
 
    local tarit="$tarcmd  ${zip}/${data}/$file.tar.bz2 $dirs"
    echo $tarit
