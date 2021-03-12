@@ -177,6 +177,3 @@ ship: all dist
 install:
 	# use the script, Luke.
 	cd scripts && ./install
-
-stretch: dist
-	scp -rp $(DOCUMENT)-$(VERSION).tar.bz2 root@stretch.virtual:tmp
