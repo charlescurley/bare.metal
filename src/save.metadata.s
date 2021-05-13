@@ -154,11 +154,11 @@ export today=$(date +%Y%m%d);   # Today's date
 export zips="/var/lib/bare.metal.recovery"
 export zip="${zips}/${HOSTNAME}.${today}";  # Today's archive
 
-if [ -d ${zip} ] ; then
-  echo deleting metadata from earlier today,
-  echo ${zip}
-  echo
-  rm -r ${zip}
+if [ -d "${zip}" ] ; then
+    rms="${zip}*"               # get the checksums, too.
+    echo "Deleting ${rms} from earlier today,"
+    echo
+    rm -r "${rms}"
 fi
 mkdir -p ${zip}/metadata ${zip}/bin ${zip}/${data}
 
