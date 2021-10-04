@@ -92,9 +92,9 @@ if [ -z "$1" ]; then            # 0 length parameter check.
 else
    local file=$1
    local t
-   for t in $(ls -d $file 2>/dev/null ) ; do
-     if [ -e $t ]; then
-       echo -n '--exclude ' ${t#/} ' ' ;
+   for t in ${file} ; do
+     if [ -d "${t}" ]; then
+       echo -n '--exclude ' "${t#/}" ' ' ;
      fi
    done
 fi
@@ -124,7 +124,7 @@ else
 
    # shall we use multi-processor compression? Assuming it's in our
    # $PATH.
-   zipper=$(which pbzip2)
+   zipper=$(command -v pbzip2)
    if [ -z "${zipper}" ] ; then
        local tarcmd="tar --numeric-owner -cjf"	# The tar command.
    else
@@ -132,7 +132,7 @@ else
    fi
 
    local tarit="$tarcmd  ${zip}/${data}/$file.tar.bz2 $dirs"
-   echo $tarit
+   echo "${tarit}"
    $tarit			# do it!!
 
    error=$?			# Preserve the exit code
@@ -140,7 +140,7 @@ else
    if [ $error != 0 ]		# Did we fail?
    then				# Yes
       echo "Tar failed with error $error"
-      echo $tarcmd ${zip}/${data}/$file.tar.bz2 $dirs
+      echo "${tarcmd}" "${zip}/${data}/$file.tar.bz2" "${dirs}"
       exit $error		# return tar's exit code as ours
    fi
 
@@ -150,7 +150,12 @@ fi
 
 # Begin the main line code
 export data="data";             # Name of the data directory in the archive
-export today=$(date +%Y%m%d);   # Today's date
+export today;
+if ! today=$(date +%Y%m%d); then  # Today's date
+    echo Error getting date "${today}".
+    exit 0
+fi
+
 export zips="/var/lib/bare.metal.recovery"
 export zip="${zips}/${HOSTNAME}.${today}";  # Today's archive
 
@@ -158,11 +163,11 @@ if [ -d "${zip}" ] ; then
     rms="${zip}*"               # get the checksums, too.
     echo "Deleting ${rms} from earlier today,"
     echo
-    rm -r "${rms}"
+    rm -r ${rms}
 fi
-mkdir -p ${zip}/metadata ${zip}/bin ${zip}/${data}
+mkdir -p "${zip}"/metadata "${zip}"/bin "${zip}"/${data}
 
-NEW=${zip}/metadata/rpmVa.txt       # name for the rpm -Va output file.
+NEW="${zip}"/metadata/rpmVa.txt       # name for the rpm -Va output file.
 
 # Now we save hard drive information. Run make.fdisk on each hard
 # drive in the order in which it mounted from the root partition. That
@@ -187,62 +192,60 @@ echo "Saving hard drive info"
 # List all your hard drives here. Put them in the order you want
 # things done at restore time.
 
-# for drive in sda ; do
-for drive in $(ls /dev/[hsv]d? | cut -c6-10) ; do
-    echo Processing drive ${drive}
-    fdisk -l /dev/${drive} | grep GPT > /dev/null
-    if [ $? = '0' ] ; then
-        echo "GPT found."
-	sgd=$(which sgdisk)
+for drive in $(find /dev/ -maxdepth 1 -iname '[hsv]d?' | cut -c6-10) ; do
+    echo Processing drive "${drive}"
+    if fdisk -l "/dev/${drive}" | grep -q GPT ; then
+        echo "${drive}: GPT found."
+
+        sgd=$(command -v sgdisk)
         if [ $? = '1' ] ; then
             echo "sgdisk required ; install package gdisk!"
             exit 1
         fi
-	sgdisk -p /dev/${drive} > ${zip}/sgdisk.${drive}.txt
-	sgdisk --backup=${zip}/metadata/sgdisk.${drive} /dev/${drive}
+
+	${sgd} -p "/dev/${drive}" > "${zip}/sgdisk.${drive}.txt"
+	${sgd} --backup="${zip}/metadata/sgdisk.${drive}" "/dev/${drive}"
     else
-        echo "GPT not found. Handling as usual."
-        make.fdisk /dev/${drive}
-        fdisk -l /dev/${drive} > ${zip}/fdisk.${drive}
+        echo "${drive}: GPT not found. Handling as usual."
+        make.fdisk "/dev/${drive}"
+        fdisk -l "/dev/${drive}" > "${zip}/fdisk.${drive}"
     fi
 done
 
-echo -e "$(hostname) bare metal archive, created $(date)" > ${zip}/README.txt
-uname -a >> ${zip}/README.txt
+echo -e "$(hostname) bare metal archive, created $(date)" > "${zip}"/README.txt
+uname -a >> "${zip}"/README.txt
 
 # Preserve the release information. Tested with Red Hat/Fedora, should
 # work with SuSE, Mandrake and other RPM based systems. Also Ubuntu
 # 7.10, Gutsy Gibbon.
 
-for releasefile in $(ls /etc/*release*  /etc/debian_version) ; do
-  # echo $releasefile
-  if [ -e $releasefile ] && [ ! -L $releasefile ] ; then
-    cat $releasefile >> ${zip}/README.txt
+for releasefile in /etc/*release*  /etc/debian_version ; do
+  # echo "${releasefile}"
+  if [ -e "${releasefile}" ] && [ ! -L "${releasefile}" ] ; then
+    cat "${releasefile}" >> "${zip}/README.txt"
   fi
 done
 
 # Linux Standard Base information.
-
-lsb=$(which lsb_release)
-
-if [ $? = '0' ] ; then
-  echo >> ${zip}/README.txt
-  echo LSB data: >> ${zip}/README.txt
-  lsb_release -a >> ${zip}/README.txt
+if lsb=$(command -v lsb_release) ; then
+# if [ $? = '0' ] ; then
+  { echo ;
+  echo LSB data:
+  ${lsb} -a ; } >> "${zip}"/README.txt
 fi
 
 # end Linux Standard Base information.
 
 # Are we on an RPM based system? Suse?? Other RPM systems?
-REDHAT=$(grep -iq \(fedora\|redhat\) ${zip}/README.txt ; echo $?)
+REDHAT=$(grep -iq \(fedora\|redhat\) "${zip}"/README.txt ; echo $?)
 
-ifconfig > ${zip}/ifconfig
+ifconfig > "${zip}"/ifconfig
 
-if [ $REDHAT == 0 ] ; then
+if [ "${REDHAT}" == 0 ] ; then
 
     # back up RPM metadata
     echo "Verifying RPMs."
-    rpm -Va | sort -t ' ' -k 3 | uniq > ${NEW}
+    rpm -Va | sort -t ' ' -k 3 | uniq > "${NEW}"
     echo "Finished verifying RPMs."
 
 else
@@ -250,12 +253,12 @@ else
     # apt-get clean
     # apt-get --yes autoremove
     dpkg --get-selections "*"  > "${zip}/dpk.selections.txt"
-    dpkg-query --showformat='${Package}\t${Version}\t${Revision}\t${Architecture}\n' --show | sort > ${zip}/packages.txt
-    if [ -z $(which debsums) ] ; then
-        echo debsums is *not* intalled.
+    dpkg-query --showformat='${Package}\t${Version}\t${Revision}\t${Architecture}\n' --show | sort > "${zip}"/packages.txt
+    if [ -z "$(command -v debsums)" ] ; then
+        echo "debsums is *not* intalled."
     else
         echo Running debsums...
-        debsums -csa > ${zip}/metadata/debsums.txt 2>&1
+        debsums -csa > "${zip}"/metadata/debsums.txt 2>&1
         echo Done running debsums.
     fi
 fi
@@ -266,11 +269,11 @@ echo "Building the ZIP drive backups."
 # rebuilding process should be mostly automated, but you never
 # know....
 
-ls -al /mnt > ${zip}/ls.mnt.txt
-ls -al / > ${zip}/ls.root.txt
-ls -al /var > ${zip}/ls.var.txt
+ls -al /mnt > "${zip}"/ls.mnt.txt
+ls -al / > "${zip}"/ls.root.txt
+ls -al /var > "${zip}"/ls.var.txt
 
-cd /
+cd / || exit
 
 # Build our minimal archives on the ZIP disk. These appear to be
 # required so we can restore later on.
@@ -358,13 +361,13 @@ crunch usr.sbin usr/sbin
 # crunch usr.local usr/local
 # crunch usr.libexec usr/libexec
 
-if [ $REDHAT == 0 ] ; then
+if [ "${REDHAT}" == 0 ] ; then
   crunch usr.kerberos usr/kerberos
 fi
 
 crunch usr.bin --exclude usr/bin/emacs-x \
 --exclude usr/bin/emacsclient --exclude usr/bin/emacs-nox --exclude \
-usr/bin/gs --exclude usr/bin/pine $(exclude 'usr/bin/gimp-*') \
+usr/bin/gs --exclude usr/bin/pine "$(exclude 'usr/bin/gimp-*')" \
 --exclude usr/bin/doxygen --exclude usr/bin/postgres --exclude \
 usr/bin/gdb --exclude usr/bin/kmail --exclude usr/bin/splint \
 --exclude usr/bin/odbctest --exclude usr/bin/php --exclude \
@@ -412,23 +415,23 @@ crunch var.lib.amanda var/lib/amanda
 #  usr/lib/libk* usr/lib/*krb5* usr/lib/libgss*
 
 # Grub requires these at installation time.
-if [ $REDHAT == 0 ] ; then
+if [ "${REDHAT}" == 0 ] ; then
   crunch usr.share.grub usr/share/grub
 else
   crunch usr.lib.grub usr/lib/grub
 fi
 
 # save the scripts we will use to restore.
-cp -p /etc/bare.metal.recovery/* ${zip}/bin
+cp -p /etc/bare.metal.recovery/* "${zip}"/bin
 
 echo "Testing our results."
-find ${zip} -iname "*.bz2" | xargs bunzip2 -t
+find "${zip}" -iname "*.bz2" -print0 | xargs -0 bunzip2 -t
 
 # Since we're doing system stuff anyway, make a boot disk ISO image
 # suitable for burning. It uses the current kernel.
 
-if [ $REDHAT == 0 ] ; then
-  mkbootdisk --iso --device ${zip}/bootdisk.$(uname -r).iso $(uname -r)
+if [ "${REDHAT}" == 0 ] ; then
+  mkbootdisk --iso --device "${zip}/bootdisk.$(uname -r).iso" "$(uname -r)"
 fi
 
 # 2007ish kernels incorporated a new ATA (IDE) hard drive
@@ -446,13 +449,13 @@ fi
 # carefully. Check it if you add or remove a hard drive of any
 # interface type to or from your system!
 
-# find ${zip} -type f | grep -v bz2$ | xargs sed -i 's|/dev/sda|/dev/hda|g'
+# find "${zip}" -type f | grep -v bz2$ | xargs sed -i 's|/dev/sda|/dev/hda|g'
 
 echo "Making checksums so we can verify..."
-pushd ${zips}
-find ${HOSTNAME}.${today} -type f | sort | xargs sha512sum >  ${zip}.sha512sums
-find ${HOSTNAME}.${today} -type f | sort | xargs sha256sum >  ${zip}.sha256sums
-popd
+pushd ${zips} || exit
+find "${HOSTNAME}.${today}" -type f | sort | xargs sha512sum >  "${zip}".sha512sums
+find "${HOSTNAME}.${today}" -type f | sort | xargs sha256sum >  "${zip}".sha256sums
+popd || exit
 
-du -hs ${zip}
+du -hs "${zip}"
 df -h
