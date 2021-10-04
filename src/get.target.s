@@ -25,14 +25,14 @@
 # directory. That gives us host name and OS.etc. From that we extract
 # the host name.
 
-path=`pwd`
+path=$(pwd)
 
 target=${path##/*/}
 host=${target%%.*}
 
 # Run "info date" for more information.
 
-DATE=`date +%Y%m%d`
+DATE=$(date +%Y%m%d)
 # echo "Today's date is $DATE."
 
 echo "\$target is $target. \$host is $host. Today's date is $DATE."
@@ -40,29 +40,29 @@ echo "\$target is $target. \$host is $host. Today's date is $DATE."
 name=$0
 echo "This is script $name"
 
-if [ $(echo $name | grep -i get > /dev/null) ] ; then
+if [ $(echo "$name" | grep -i get > /dev/null) ] ; then
     # Do functions common to all restores.
 
     # Which archive do we restore and is this a valid target name?
 
     TARGET=$1
 
-    if [ -z $TARGET ] ; then
+    if [ -z "$TARGET" ] ; then
         echo Please specify a target from one of:
-        for dir in $(ls -d $host.*) ; do
-            if [ -d $dir ] ; then
+        for dir in $(ls -d "$host".*) ; do
+            if [ -d "$dir" ] ; then
                 echo -n "$dir "
             fi
         done
         exit 2;
     fi
 
-    if [ -z $TARGET ] || [ ! -d $TARGET ] ; then
-        echo $TARGET does not exist!
+    if [ -z "$TARGET" ] || [ ! -d "$TARGET" ] ; then
+        echo "$TARGET" does not exist!
         exit 2;
     fi
 
-    ssh $host rm -r /var/lib/rpm
+    ssh "$host" rm -r /var/lib/rpm
 else
     # Do functions common to all gets.
 
@@ -73,12 +73,12 @@ else
 
     # If it does not already exist, build the archive.
 
-    ssh $host "if [ ! -d ${zip}/$DATE ] ; then echo Saving metadata... ; save.metadata ; fi"
+    ssh "$host" "if [ ! -d ${zip}/$DATE ] ; then echo Saving metadata... ; save.metadata ; fi"
 
-    echo Backing up $host
+    echo Backing up "$host"
 
-    if [ -e $host.$DATE ] ; then
-	    rm -r $host.$DATE
+    if [ -e "$host.$DATE" ] ; then
+	    rm -r "$host.$DATE"
     fi
 
     echo Copying the bare metal recovery archive.
@@ -86,16 +86,16 @@ else
     # -r for recursive copy, -p to preserve times and permissions, -q
     # for quiet: no progress meter.
 
-    scp -qpr $host:$zip/$DATE $host.$DATE
+    scp -qpr "$host:$zip/$DATE" "$host.$DATE"
 
-    du -hs $host.*
+    du -hs "$host".*
 
     echo Cleaning out old yum packages
-    ssh $host "yum clean packages"
+    ssh "$host" "yum clean packages"
 
-    echo Backing up $host to the backup server.
+    echo Backing up "$host" to the backup server.
 
-    if [ -e $host.$DATE.tar.bz2 ] ; then
-        rm $host.$DATE.tar.bz2
+    if [ -e "$host.$DATE".tar.bz2 ] ; then
+        rm "$host.$DATE".tar.bz2
     fi
 fi

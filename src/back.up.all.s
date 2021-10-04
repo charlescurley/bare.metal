@@ -32,7 +32,7 @@ save="/mnt/save"
 umount $save
 mount $save
 
-cd /
+cd / || exit
 
 rm $save/tester.tar.old.gz
 mv $save/tester.tar.gz $save/tester.tar.old.gz

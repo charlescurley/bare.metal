@@ -41,9 +41,9 @@ then
 fi
 
 for drive in $( ls make.dev.* ); do
-    echo $drive$'\a'
+    echo "$drive"$'\a'
     sleep 2
-    ./$drive $blockcheck;
+    ./"$drive" "$blockcheck";
 done
 
 # If there are any LVM volumes, now is the time to restore them.
@@ -72,9 +72,9 @@ fi
 # in the order in which you should run them.
 
 for drive in $( ls -tr mount.dev.* ); do
-    echo $drive$'\a'
+    echo "$drive"$'\a'
     sleep 2
-    ./$drive;
+    ./"$drive";
 done
 
 ./restore.metadata
