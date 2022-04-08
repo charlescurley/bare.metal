@@ -194,7 +194,7 @@ echo "Saving hard drive info"
 
 for drive in $(find /dev/ -maxdepth 1 -iname '[hsv]d?' | cut -c6-10) ; do
     echo Processing drive "${drive}"
-    if fdisk -l "/dev/${drive}" | grep -q GPT ; then
+    if fdisk -l "/dev/${drive}" | grep -qi gpt ; then
         echo "${drive}: GPT found."
 
         sgd=$(command -v sgdisk)
@@ -205,11 +205,9 @@ for drive in $(find /dev/ -maxdepth 1 -iname '[hsv]d?' | cut -c6-10) ; do
 
 	${sgd} -p "/dev/${drive}" > "${zip}/sgdisk.${drive}.txt"
 	${sgd} --backup="${zip}/metadata/sgdisk.${drive}" "/dev/${drive}"
-    else
-        echo "${drive}: GPT not found. Handling as usual."
-        make.fdisk "/dev/${drive}"
-        fdisk -l "/dev/${drive}" > "${zip}/fdisk.${drive}"
     fi
+    fdisk -l "/dev/${drive}" > "${zip}/fdisk.${drive}"
+    make.fdisk "/dev/${drive}"
 done
 
 echo -e "$(hostname) bare metal archive, created $(date)" > "${zip}"/README.txt
