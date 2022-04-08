@@ -51,14 +51,14 @@ $(DOCUMENT)/index.html: $(DOCUMENT).sgml scripts $(SCRIPTS)
 	rm -r $(DOCUMENT).junk
 	mv $(DOCUMENT) $(DOCUMENT).junk
 	mkdir $(DOCUMENT)
-	cd $(DOCUMENT) ; /usr/bin/jade $(JADEOPTS) -t sgml -i html $(indexdsl) $(dslhtml) ../$(DOCUMENT).sgml
+	cd $(DOCUMENT) ; /usr/bin/openjade $(JADEOPTS) -t sgml -i html $(indexdsl) $(dslhtml) ../$(DOCUMENT).sgml
 
 # this target makes it easier to type as a target name. OK, I'm lazy.
 chunky: $(DOCUMENT)/index.html
 
 
 $(DOCUMENT).smooth/$(DOCUMENT).smooth.html: $(DOCUMENT).sgml scripts $(SCRIPTS)
-	/usr/bin/jade $(JADEOPTS) -V nochunks -t sgml -i html $(indexdsl) $(dslhtml) $(DOCUMENT).sgml > $(DOCUMENT).smooth/$(DOCUMENT).smooth.html
+	/usr/bin/openjade $(JADEOPTS) -V nochunks -t sgml -i html $(indexdsl) $(dslhtml) $(DOCUMENT).sgml > $(DOCUMENT).smooth/$(DOCUMENT).smooth.html
 smooth: $(DOCUMENT).smooth/$(DOCUMENT).smooth.html
 
 html: chunky smooth
@@ -69,20 +69,20 @@ $(DOCUMENT).txt: $(DOCUMENT).smooth/$(DOCUMENT).smooth.html
 text: $(DOCUMENT).txt
 
 $(DOCUMENT).rtf: $(DOCUMENT).sgml scripts $(SCRIPTS)
-	jade $(JADEOPTS) -t rtf -V rtf-backend $(dslprint) $(DOCUMENT).sgml
+	/usr/bin/openjade $(JADEOPTS) -t rtf -V rtf-backend $(dslprint) $(DOCUMENT).sgml
 rtf: $(DOCUMENT).rtf
 
 $(DOCUMENT).tex: $(DOCUMENT).sgml scripts $(SCRIPTS)
-	jade $(JADEOPTS) -t tex -V tex-backend $(dslprint) $(DOCUMENT).sgml
+	/usr/bin/openjade $(JADEOPTS) -t tex -V tex-backend $(dslprint) $(DOCUMENT).sgml
 tex: $(DOCUMENT).tex
 
 # It seems to be necessary to run this thrice in order to get the TOC
 # to work correctly. I don't understand it either.
 
 $(DOCUMENT).dvi: $(DOCUMENT).tex scripts $(SCRIPTS)
-	jadetex $(DOCUMENT).tex
-	jadetex $(DOCUMENT).tex
-	jadetex $(DOCUMENT).tex
+	/usr/bin/jadetex $(DOCUMENT).tex
+	/usr/bin/jadetex $(DOCUMENT).tex
+	/usr/bin/jadetex $(DOCUMENT).tex
 
 dvi: $(DOCUMENT).dvi
 
@@ -98,9 +98,9 @@ ps: $(DOCUMENT).ps
 # the left side of the acroread reader. I don't understand it either.
 
 $(DOCUMENT).pdf: $(DOCUMENT).tex scripts $(SCRIPTS)
-	pdfjadetex $(DOCUMENT).tex
-	pdfjadetex $(DOCUMENT).tex
-	pdfjadetex $(DOCUMENT).tex
+	/usr/bin/pdfjadetex $(DOCUMENT).tex
+	/usr/bin/pdfjadetex $(DOCUMENT).tex
+	/usr/bin/pdfjadetex $(DOCUMENT).tex
 
 pdf: $(DOCUMENT).pdf
 

@@ -41,8 +41,11 @@ the directory `scripts`.
 Debian packages you may want, among others:
 
 ```
-apt install make jade jadetex docbook ldp-docbook-dsssl lynx
+apt install make (open)?jade jadetex docbook ldp-docbook-dsssl lynx
 ```
+
+Depending on whether your distribution provides jade or openjade, you
+may have to edit the makefile, `Makefile`.
 
 This directory has the SGML source and related files for the Linux
 Complete Backup and Recovery HOWTO. It should have everything you need
@@ -56,7 +59,7 @@ files, etc. For a complete list of the available targets, see the file
 Makefile.
 
 Making the .dvi and .pdf files may fail. Simply run the same make
-command again.
+command again. I don't understand it either.
 
 The sources for the scripts are in the subdirectory `src`. Copies
 exactly as I use them on my test environment are in the subdirectory
