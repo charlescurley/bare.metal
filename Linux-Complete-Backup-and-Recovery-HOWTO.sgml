@@ -72,6 +72,12 @@ Change notes:
       <!-- Additional revision history entries go here -->
       <!-- Can we automate this? C^2 -->
       <revision>
+        <revnumber>2.14</revnumber>
+        <date>2022-04-08</date>
+        <authorinitials>c^2</authorinitials>
+        <revremark>Fdisk now returns the string gpt in either upper or lower case. Other improvements.</revremark>
+      </revision>
+      <revision>
         <revnumber>2.13</revnumber>
         <date>2019-07-24</date>
         <authorinitials>c^2</authorinitials>
