@@ -108,9 +108,9 @@ pdf: $(DOCUMENT).pdf
 all: html rtf tex dvi ps pdf text
 
 # The source tarball for download
-$(DOCUMENT)-$(VERSION).tar.bz2: bare.metal.backup.excludes README.md src $(DOCUMENT).sgml Makefile images COPYING ldp.dsl all
+$(DOCUMENT)-$(VERSION).tar.bz2: bare.metal.backup.excludes changelog.txt README.md src $(DOCUMENT).sgml Makefile images COPYING ldp.dsl all
 	mkdir -p $(DOCUMENT)-$(VERSION)
-	cp -rp bare.metal.backup.excludes README.md src scripts $(DOCUMENT).sgml Makefile images $(DOCUMENT)-$(VERSION)
+	cp -rp bare.metal.backup.excludes changelog.txt README.md src scripts $(DOCUMENT).sgml Makefile images $(DOCUMENT)-$(VERSION)
 	-cp -rpL COPYING ldp.dsl $(DOCUMENT)-$(VERSION)
 	rm -rf $(DOCUMENT)-$(VERSION)/scripts/*~
 	rm -rf $(DOCUMENT)-$(VERSION)/src/*~
