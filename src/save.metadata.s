@@ -112,7 +112,6 @@ fi
 # files to be put into the archive.
 
 function crunch {
-
 if [ -z "$1" ] || [ -z "$2" ]	# Checks if parameter #1 or #2 is zero length.
 then
    echo "-Parameter #1 or #2 is missing.-"  # Also if no parameter is passed.
@@ -377,7 +376,7 @@ usr/bin/xchat --exclude usr/bin/gnucash --exclude usr/bin/pdfetex \
 crunch sbin sbin
 crunch bin bin
 crunch dev dev
-crunch run run
+crunch run --exclude run/user/*/doc run
 
 # Debian amanda clients will want these in order to run amrecover:
 crunch var.backup var/backups
@@ -449,11 +448,13 @@ fi
 
 # find "${zip}" -type f | grep -v bz2$ | xargs sed -i 's|/dev/sda|/dev/hda|g'
 
-echo "Making checksums so we can verify..."
 pushd ${zips} || exit
+echo "Making checksums so we can verify..."
 find "${HOSTNAME}.${today}" -type f | sort | xargs sha512sum >  "${zip}".sha512sums
 find "${HOSTNAME}.${today}" -type f | sort | xargs sha256sum >  "${zip}".sha256sums
 popd || exit
 
 du -hs "${zip}"
 df -h
+
+echo Sucess!
