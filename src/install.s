@@ -72,7 +72,7 @@ for i in first.stage restore.metadata install.grub ; do
   chown root:root /etc/bare.metal.recovery/$i
 done
 
-if [ ! "$(grep -c processor /proc/cpuinfo)" = "1" ] &&
+if [ ! "$(grep -c '^processor[[:blank:]]*: [[:digit:]]*$' /proc/cpuinfo)" = "1" ] &&
        test -z "$(command -v pbzip2)" ; then
     echo "Multiprocessor! This program would benefit from pbzip2.";
     echo "E.g.: apt install pigz pbzip2";
