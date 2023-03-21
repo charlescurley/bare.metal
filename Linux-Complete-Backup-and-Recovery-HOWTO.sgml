@@ -72,6 +72,12 @@ Change notes:
       <!-- Additional revision history entries go here -->
       <!-- Can we automate this? C^2 -->
       <revision>
+        <revnumber>2.15</revnumber>
+        <date></date>
+        <authorinitials>c^2</authorinitials>
+        <revremark>A number of minor changes. All changes are now shown in the change log.</revremark>
+      </revision>
+      <revision>
         <revnumber>2.14</revnumber>
         <date>2022-04-08</date>
         <authorinitials>c^2</authorinitials>
