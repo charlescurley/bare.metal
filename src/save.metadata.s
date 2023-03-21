@@ -212,6 +212,12 @@ done
 echo -e "$(hostname) bare metal archive, created $(date)" > "${zip}"/README.txt
 uname -a >> "${zip}"/README.txt
 
+# More information about disks. Possibly useful for reconstructing
+# complicated setups we would otherwise miss.
+lsblk -o +size,partflags,hotplug -Mfi  >> "${zip}"/lsblk.Mfi.txt
+lsblk -o +size,partflags,hotplug -MfiJ >> "${zip}"/lsblk.MfiJ.txt
+lsblk -o +size,partflags,hotplug -MfiP >> "${zip}"/lsblk.pairs.txt
+
 # Preserve the release information. Tested with Red Hat/Fedora, should
 # work with SuSE, Mandrake and other RPM based systems. Also Ubuntu
 # 7.10, Gutsy Gibbon.
