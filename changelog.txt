@@ -4,3 +4,9 @@ Changes for 2.15
   permissions in /run/user/1000. This change avoids that problem at
   the cost of not backing up all of /run.
 
+* More information about disks using lsblk. Possibly useful for
+  reconstructing complicated setups we would otherwise miss.
+
+* A more rigorous pattern to search on for multiple processors.
+
+* Deal with /run/user/*/doc permissions nonsense.
