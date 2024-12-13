@@ -191,7 +191,7 @@ echo "Saving hard drive info"
 # List all your hard drives here. Put them in the order you want
 # things done at restore time.
 
-for drive in $(find /dev/ -maxdepth 1 -iname '[hsv]d?' | cut -c6-10) ; do
+for drive in $(find /dev/ -maxdepth 1 \( -name '[hsv]d?' -o -name 'nvme[0-9]n[0-9]' \) | cut -c6-) ; do
     echo Processing drive "${drive}"
     if fdisk -l "/dev/${drive}" | grep -qi gpt ; then
         echo "${drive}: GPT found."
