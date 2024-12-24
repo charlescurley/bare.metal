@@ -189,7 +189,9 @@ NEW="${zip}"/metadata/rpmVa.txt       # name for the rpm -Va output file.
 echo "Saving hard drive info"
 
 # List all your hard drives here. Put them in the order you want
-# things done at restore time.
+# things done at restore time. N.B. The nvme search pattern will only
+# find names with single digits in the first two numeric fields. This
+# might be problematic. e.g. it will not find nvme23n1.
 
 for drive in $(find /dev/ -maxdepth 1 \( -name '[hsv]d?' -o -name 'nvme[0-9]n[0-9]' \) | cut -c6-) ; do
     echo Processing drive "${drive}"
