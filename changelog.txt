@@ -1,6 +1,6 @@
 Changes for 2.15
 
-* NVMe friendly search for drves.
+* NVMe friendly searches for drves.
 
 * Some installations of Debian 11 (Bullseye) play dumb games with file
   permissions in /run/user/1000. This change avoids that problem at
