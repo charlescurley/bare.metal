@@ -43,7 +43,7 @@ clean:
 	cd src && make clean
 	mkdir cooked scripts $(DOCUMENT) $(DOCUMENT).junk $(DOCUMENT).smooth
 
-# .PHONY: scripts
+.PHONY: scripts
 scripts: cooked
 	cd src && make all
 
