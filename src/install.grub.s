@@ -33,7 +33,7 @@
 # same. If grub-install fails, you may be able to chroot, and then run
 # grub-install from inside the chroot environment.
 
-BOOTDEV=$(ls /dev/[shv]da)
+BOOTDEV=$(ls /dev/[shv]da /dev/nvme[0-9]n[0-9])
 
 # prep for chroot
 mount -t proc none /target/proc
